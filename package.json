@@ -1,0 +1,9 @@
+{
+  "name": "egor-casino",
+  "private": true,
+  "description": "Фан-казино на вымышленные Егорики. Без сборки: открой index.html.",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "e2e": "node tests/e2e/smoke.js"
+  }
+}
