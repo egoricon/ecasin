@@ -10,6 +10,14 @@
 (`file://`), и на GitHub Pages. Шрифты (Russo One, Onest, JetBrains Mono) грузятся с Google Fonts;
 без интернета подставятся системные.
 
+### Публикация: https://egoricon.github.io/ecasin/
+
+Все пути в проекте относительные, поэтому сайт работает из подпапки `/ecasin/` без правок.
+1. Файлы проекта лежат в корне ветки `main` (рядом с `index.html` — папки `css/` и `js/`).
+2. GitHub → **Settings → Pages → Build and deployment**: Source — *Deploy from a branch*,
+   Branch — `main`, папка `/ (root)` → Save.
+3. Через 1–2 минуты сайт открывается по ссылке. Пустой файл `.nojekyll` отключает лишнюю обработку Jekyll.
+
 Тесты (нужен Node 18+):
 
 ```bash
