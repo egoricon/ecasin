@@ -38,7 +38,9 @@
     const t = EC.econ.titleOf(id);
     return t ? html`<span class="bdg bdg-${t.c}">${t.n}</span>` : '';
   };
-  UI.avatar = () => C.AVATARS[EC.store.state.avatar] || C.AVATARS[0];
+  // Доступные аватары: базовые + VIP-набор из магазина.
+  UI.avatarList = () => C.AVATARS.concat(EC.store.state.shopOwned.avatars ? C.VIP_AVATARS : []);
+  UI.avatar = () => UI.avatarList()[EC.store.state.avatar] || C.AVATARS[0];
 
   EC.ui = UI;
 })(globalThis.EC = globalThis.EC || {});

@@ -107,7 +107,7 @@
       q.textContent = r.qualifies ? 'квалифицирован' : 'не квалифицирован';
       // Золотом — только если блайнд реально выиграл
       if (!folded && r.cmp > 0 && P.BLIND_PAYS[you.cat]) ctx.$$(`#pkBlind [data-c="${you.cat}"]`).forEach((x) => x.classList.add('hit'));
-      const res = h.round.end(r.pay, { label: 'Холдем' + (winner ? ', ' + winner.name.toLowerCase() : '') });
+      const res = h.round.end(r.pay, { label: 'Холдем' + (winner ? ', ' + winner.name.toLowerCase() : ''), share: r.cmp > 0 && you.cat >= P.CAT.STRAIGHT_FLUSH ? you.name + ' в холдеме' : '' });
       if (res.net > 0) { EC.econ.unlock('poker'); EC.econ.tickMission('poker'); }
       const verdict = folded ? 'Фолд' : r.cmp > 0 ? 'Твоя рука сильнее' : r.cmp < 0 ? 'Дилер сильнее' : 'Ничья';
       status(`${verdict}: ${you.name} против ${dealer.name}`);

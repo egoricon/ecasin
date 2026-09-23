@@ -1,4 +1,5 @@
-/* «Заработок» — логика кликера без DOM. Валюта общая: пишем прямо в state.balance. */
+/* Учёба в БГУИР — логика кликера без DOM. Валюта общая: пишем прямо в state.balance.
+   Храним только уровни апгрейдов; сила клика и доход в секунду считаются на лету. */
 (function (EC) {
   'use strict';
   const U = EC.util, C = EC.config, CFG = C.EARN;
@@ -7,7 +8,8 @@
   const L = {};
 
   L.upgrade = (id) => CFG.upgrades.find((u) => u.id === id);
-  L.cost = (up, lvl) => Math.ceil(up.base * Math.pow(CFG.growth, lvl));
+  L.growth = (up) => CFG.growth[up.cat];
+  L.cost = (up, lvl) => Math.floor(up.base * Math.pow(L.growth(up), lvl));
   // Цена n уровней подряд начиная с lvl.
   L.costN = (up, lvl, n) => {
     let t = 0;
@@ -25,21 +27,18 @@
     }
     return n;
   };
+  // Апгрейд появляется в ведомости, когда наботано 50% его базовой цены (или он уже куплен).
+  L.visible = (up, s = S()) => (s.clickerLvl[up.id] || 0) > 0 || s.earnTotal >= up.base * CFG.revealAt;
+  // Ближайший ещё скрытый апгрейд ветки — цель «что дальше».
+  L.nextHidden = (cat, s = S()) => CFG.upgrades.find((u) => u.cat === cat && !L.visible(u, s)) || null;
 
-  L.boost = (s = S()) => 1 + 0.1 * (s.skills.studyBoost || 0);
-  // Сила клика и пассивный доход «сырые» хранятся в state (clickPower, eps), буст навыка — сверху.
-  L.recompute = (s = S()) => {
-    let click = CFG.baseClick, eps = 0;
-    for (const up of CFG.upgrades) {
-      const lvl = s.clickerLvl[up.id] || 0;
-      if (up.click) click += up.click * lvl;
-      if (up.eps) eps += up.eps * lvl;
-    }
-    s.clickPower = click;
-    s.eps = eps;
-  };
-  L.clickValue = (s = S()) => Math.max(1, Math.floor(s.clickPower * L.boost(s)));
-  L.epsValue = (s = S()) => s.eps * L.boost(s);
+  /* ---------- Формулы ---------- */
+  L.rawClick = (s = S()) => CFG.upgrades.reduce((t, u) => t + (u.click || 0) * (s.clickerLvl[u.id] || 0), CFG.baseClick);
+  L.rawEps = (s = S()) => CFG.upgrades.reduce((t, u) => t + (u.eps || 0) * (s.clickerLvl[u.id] || 0), 0);
+  // Все множители — в одном месте: навык «Зубрила», кружка из магазина, недельный ивент.
+  L.multiplier = (s = S()) => (1 + 0.1 * (s.skills.studyBoost || 0)) * (s.shopEquipped.mug ? 1.1 : 1) * EC.econ.weekMult();
+  L.getClickPower = (s = S()) => L.rawClick(s) * L.multiplier(s);
+  L.getEps = (s = S()) => L.rawEps(s) * L.multiplier(s);
 
   // Прибавить заработок. Дробная часть копится в earnFrac, баланс всегда целый.
   function gain(s, amount) {
@@ -53,44 +52,42 @@
     return whole;
   }
 
-  L.click = (rnd = U.rand) => {
+  L.click = () => {
     const s = S();
-    const crit = rnd() < CFG.crit.chance;
-    const value = L.clickValue(s) * (crit ? CFG.crit.mult : 1);
-    s.balance += value;
-    s.earnTotal += value;
+    const value = L.getClickPower(s);
+    gain(s, value);
     s.clicks++;
     EC.econ.tickQuest('clicks');
     L.checkAch();
-    return { value, crit };
+    return { value };
   };
 
   L.buy = (id, n = 1) => {
     const s = S(), up = L.upgrade(id);
-    if (!up || n < 1) return false;
+    if (!up || n < 1 || !L.visible(up, s)) return false;
     const lvl = s.clickerLvl[id] || 0;
     const price = L.costN(up, lvl, n);
     if (price > s.balance) return false;
     s.balance -= price;
     s.clickerLvl[id] = lvl + n;
     s.upgradesBought += n;
-    L.recompute(s);
     EC.econ.tickMission('earn', n);
+    EC.econ.unlock(up.cat === 'study' ? 'first_study' : 'first_life');
     L.checkAch();
+    EC.bus.emit('upgrade', id);
     return price;
   };
 
-  /* Начисление пассивного дохода по времени, а не по тикам:
-     фоновые вкладки троттлятся, поэтому считаем dt = now − lastTick.
-     visible = вкладка на экране. Первые 5 секунд dt — «онлайн» (полная ставка),
-     всё, что сверху, и всё время скрытой/закрытой вкладки — «оффлайн»: offlineRate и кап offlineCapHours. */
+  /* Пассивный доход по времени, а не по тикам: фоновые вкладки троттлятся, поэтому dt = now − lastTick.
+     visible = вкладка на экране. Первые 5 секунд dt — «онлайн» (полная ставка), всё сверху
+     и всё время скрытой/закрытой вкладки — «оффлайн»: × offlineRate, не больше offlineCapHours. */
   L.accrue = (now = Date.now(), visible = true) => {
     const s = S();
     const out = { gain: 0, offlineGain: 0, offlineSec: 0 };
     if (!s.lastTick || now < s.lastTick) { s.lastTick = now; return out; } // первый запуск или часы ушли назад
     const dt = (now - s.lastTick) / 1000;
     s.lastTick = now;
-    const rate = L.epsValue(s);
+    const rate = L.getEps(s);
     if (rate <= 0 || dt <= 0) return out;
     const cap = CFG.offlineCapHours * 3600;
     const online = visible ? Math.min(dt, 5) : 0;
@@ -103,13 +100,17 @@
     return out;
   };
 
+  /* ---------- Дверь «Подвал общаги» ---------- */
+  L.doorProgress = (s = S()) => U.clamp(s.earnTotal / CFG.door.rumors, 0, 1);
+
   L.checkAch = () => {
     const s = S(), E = EC.econ;
+    if (s.clicks >= 1) E.unlock('first_click');
     if (s.clicks >= 100) E.unlock('first_pair');
+    if (s.clicks >= 1000) E.unlock('clicks_1000');
     if (s.earnTotal >= 10000) E.unlock('nerd');
     if (s.earnTotal >= 100000) E.unlock('session');
-    if (L.epsValue(s) >= 100) E.unlock('automat');
-    if (s.balance >= 10000) E.unlock('high_roller');
+    if (L.getEps(s) >= 100) E.unlock('automat');
     E.checkTitles();
   };
 

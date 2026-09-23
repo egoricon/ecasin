@@ -71,21 +71,25 @@
   /* ---------- Форматирование ---------- */
   U.fmt = (n) => U.int(n).toLocaleString('ru-RU');
   U.signed = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + U.fmt(Math.abs(n));
-  // Компактно для больших чисел кликера: 12 450 · 1,2 млн · 3,4 млрд.
-  U.compact = (n) => {
+  // Большие числа учёбы: до 10 000 полностью («9 870»), дальше «12,4 тыс» · «3,5 млн» · «1,2 млрд».
+  // В казино ставки и выигрыши показываются полностью (U.fmt).
+  U.big = (n) => {
     n = U.num(n);
     const a = Math.abs(n);
-    const f = (v, s) => (Math.floor(v * 10) / 10).toLocaleString('ru-RU') + ' ' + s;
-    if (a >= 1e12) return f(n / 1e12, 'трлн');
-    if (a >= 1e9) return f(n / 1e9, 'млрд');
-    if (a >= 1e6) return f(n / 1e6, 'млн');
-    return U.fmt(n);
+    const f = (v, sfx) => (Math.floor(v * 10) / 10).toLocaleString('ru-RU') + ' ' + sfx;
+    if (a < 1e4) return U.fmt(n);
+    if (a < 1e6) return f(n / 1e3, 'тыс');
+    if (a < 1e9) return f(n / 1e6, 'млн');
+    if (a < 1e12) return f(n / 1e9, 'млрд');
+    return f(n / 1e12, 'трлн');
   };
+  U.compact = U.big;
+  // Доход в секунду: до 10 — с одной десятой («0,4»), дальше как big.
   U.rate = (n) => {
     n = U.num(n);
     if (n === 0) return '0';
     if (n < 10) return (Math.round(n * 10) / 10).toLocaleString('ru-RU');
-    return U.compact(n);
+    return U.big(Math.floor(n));
   };
   U.mult = (m) => '×' + U.num(m).toFixed(2);
   // «1 Егорик / 2 Егорика / 5 Егориков»

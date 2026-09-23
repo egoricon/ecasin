@@ -1,52 +1,95 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-theme="bsuir">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#07060D">
-<meta name="description" content="Егор Казино — фан-казино на вымышленные Егорики: рулетка, слоты, Crash, блэкджек, баккара, холдем, видеопокер, кости и кликер «Ботать в БГУИР».">
-<title>EGOR CASINO</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2307060D'/%3E%3Ccircle cx='32' cy='32' r='22' fill='%23FF3EA5'/%3E%3Ctext x='32' y='43' font-family='Arial Black,Arial' font-weight='900' font-size='30' text-anchor='middle' fill='%232E0419'%3EE%3C/text%3E%3C/svg%3E">
+<title>Егор Казино</title>
+<meta name="description" content="Ботай в БГУИР, копи Егорики и найди казино в подвале общаги: слоты, рулетка, Crash, блэкджек, баккара, холдем, видеопокер и кости на вымышленную валюту.">
+<meta name="theme-color" content="#FFFFFF" id="themeColor">
+<!-- Тема до первой отрисовки, чтобы не мигало: учёба — БГУИР, казино — неон -->
+<script>
+  (function () {
+    var casino = false;
+    try {
+      var s = JSON.parse(localStorage.getItem('egor-casino-v3') || 'null');
+      if (s) casino = s.progress ? !!(s.progress.casinoUnlocked && s.progress.mode === 'casino') : (s.games > 0 || s.balance > 100) && s.mode !== 'earn';
+      if (/^#\/(study|earn)/.test(location.hash)) casino = false;
+    } catch (e) {}
+    document.documentElement.dataset.theme = casino ? 'neon' : 'bsuir';
+    document.getElementById('themeColor').content = casino ? '#07060D' : '#FFFFFF';
+  })();
+</script>
+
+<!-- Превью ссылки в Telegram / Discord / VK -->
+<link rel="canonical" href="https://egoricon.github.io/ecasin/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Егор Казино">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="Егор Казино — ботай в БГУИР, депай в подвале">
+<meta property="og:description" content="Кликер-сессия в БГУИР, тайный подвал общаги и неоновое казино на вымышленные Егорики. Честные шансы, открытый код.">
+<meta property="og:url" content="https://egoricon.github.io/ecasin/">
+<meta property="og:image" content="https://egoricon.github.io/ecasin/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Неоновая вывеска «ЕГОР КАЗИНО»">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Егор Казино — ботай в БГУИР, депай в подвале">
+<meta name="twitter:description" content="Кликер-сессия в БГУИР, тайный подвал общаги и неоновое казино на вымышленные Егорики.">
+<meta name="twitter:image" content="https://egoricon.github.io/ecasin/assets/og-image.png">
+
+<!-- Иконка на главный экран телефона -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Егор Казино">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=Onest:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=Onest:wght@400;600&family=JetBrains+Mono:wght@500&family=PT+Serif:wght@400;700&family=PT+Sans:wght@400;700&family=PT+Mono&display=swap">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/games.css">
+<link rel="stylesheet" href="css/study.css">
 </head>
-<body class="ds" data-mode="casino">
+<body class="ds">
+
+<!-- Экран загрузки: закрывает пустую страницу, пока скрипты не готовы -->
+<div class="boot" id="boot" aria-hidden="true"><div class="boot-in"><span class="boot-logo">E</span><span class="boot-bar"><i></i></span></div></div>
 
 <header class="topbar">
-  <button class="brand" data-go="casino" aria-label="Егор Казино — на главную">ЕГОР <em>КАЗИНО</em></button>
+  <button class="brand" data-go="home" aria-label="На главный экран"><span id="brandA">ЕГОР</span> <em id="brandB">БОТАЕТ</em></button>
   <div class="top-mid">
-    <div class="seg" role="group" aria-label="Режим">
-      <button data-go="casino" data-mode-btn="casino" aria-pressed="true">Казино</button>
-      <button data-go="earn" data-mode-btn="earn" aria-pressed="false">Заработок</button>
+    <div class="seg" role="group" aria-label="Режим" id="modeSeg" hidden>
+      <button data-go="casino" data-mode-btn="casino" aria-pressed="false">Депать</button>
+      <button data-go="study" data-mode-btn="study" aria-pressed="true">Ботать</button>
     </div>
   </div>
   <div class="top-bal">
-    <div class="bal" id="balPill" title="Баланс"><i aria-hidden="true">◆</i><b id="balNum">100</b><span class="clover" id="balClover" aria-label="Клевер удачи"></span><span>Егориков</span></div>
-    <span class="online" aria-label="Игроков онлайн"><i></i><span id="onlineNum">427</span> онлайн</span>
+    <div class="bal" id="balPill" title="Баланс"><i aria-hidden="true">◆</i><b id="balNum"></b><span class="clover" id="balClover" aria-label="Клевер удачи"></span><span>Егориков</span></div>
+    <span class="online" id="online" aria-label="Игроков онлайн" hidden><i></i><span id="onlineNum">427</span> онлайн</span>
   </div>
   <div class="top-right">
-    <button class="who" data-go="profile" aria-label="Профиль"><span class="av" id="whoAv">👤</span><span class="who-txt"><span class="who-name" id="whoName">Игрок</span><span id="whoTitle"></span></span></button>
-    <button class="btn b-gho icon" data-go="donate" aria-label="Поддержать Егора" title="Поддержать Егора">💝</button>
+    <button class="who" data-go="profile" aria-label="Профиль"><span class="av" id="whoAv"></span><span class="who-txt"><span class="who-name" id="whoName"></span><span id="whoTitle"></span></span></button>
+    <button class="btn b-gho icon" data-go="donate" id="donateBtn" aria-label="Поддержать Егора" title="Поддержать Егора" hidden>💝</button>
     <button class="btn b-gho icon" data-go="settings" aria-label="Настройки" title="Настройки">⚙️</button>
   </div>
 </header>
 
 <main class="shell" id="main">
-  <section id="homeView" class="view" aria-label="Главная"></section>
-  <section id="gameView" class="view" aria-label="Игра"></section>
+  <section id="homeView" class="view" aria-label="Лобби казино"></section>
+  <section id="gameView" class="view" aria-label="Стол"></section>
   <section id="donateView" class="view" aria-label="Донат"></section>
-  <section id="earnView" class="view" aria-label="Заработок"></section>
+  <section id="studyView" class="view" aria-label="Учёба"></section>
 </main>
 
 <div id="notes" class="notes" aria-live="polite"></div>
 <div id="modalRoot"></div>
 
-<div class="ticker" aria-hidden="true"><span class="live"><i></i>LIVE</span><div class="ticker-track" id="tickerTrack"></div></div>
-<aside class="chat" id="chat" aria-label="Лайв-чат">
+<div class="ticker" id="ticker" aria-hidden="true" hidden><span class="live"><i></i>LIVE</span><div class="ticker-track" id="tickerTrack"></div></div>
+<aside class="chat" id="chat" aria-label="Лайв-чат" hidden>
   <button class="chat-head" id="chatToggle" aria-expanded="true"><span>💬 Лайв-чат</span><span id="chatSign">−</span></button>
   <div class="chat-body" id="chatBody"></div>
 </aside>
@@ -70,6 +113,7 @@
 <script defer src="js/core/audio.js"></script>
 <script defer src="js/ui/dom.js"></script>
 <script defer src="js/ui/fx.js"></script>
+<script defer src="js/ui/share.js"></script>
 <script defer src="js/ui/modal.js"></script>
 <script defer src="js/ui/header.js"></script>
 <script defer src="js/ui/shell.js"></script>
@@ -77,6 +121,8 @@
 <script defer src="js/ui/donate.js"></script>
 <script defer src="js/ui/modals.js"></script>
 <script defer src="js/ui/social.js"></script>
+<script defer src="js/ui/coach.js"></script>
+<script defer src="js/ui/scene.js"></script>
 <script defer src="js/games/roulette.js"></script>
 <script defer src="js/games/slots.js"></script>
 <script defer src="js/games/crash.js"></script>

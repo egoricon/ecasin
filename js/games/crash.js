@@ -105,7 +105,7 @@
         UI.set(capEl, html`Забрано на <span class="num">${U.mult(m)}</span> · взрыв был на <b>${U.mult(f.cp)}</b>`);
         if (m >= 10) EC.econ.unlock('crash_master');
         EC.sound.play('cash');
-        res = f.round.end(pay, { label: 'Crash на ' + U.mult(m) });
+        res = f.round.end(pay, { label: 'Crash на ' + U.mult(m), share: m >= 10 ? 'Crash ' + U.mult(m) : '' });
         ctx.result(res, 'Забрал на ' + U.mult(m));
       } else {
         multEl.className = 'crash-mult boom';

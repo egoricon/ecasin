@@ -1,4 +1,4 @@
-/* Все модалки: магазин, навыки, титулы, достижения, статистика, правила, настройки, профиль, банкрот, туториал. */
+/* Все модалки: магазин, навыки, титулы, достижения, статистика, правила, «Честные шансы», настройки, профиль, «Отчислен». */
 (function (EC) {
   'use strict';
   const U = EC.util, UI = EC.ui, C = EC.config, html = U.html;
@@ -7,28 +7,46 @@
 
   const M = {};
 
-  /* ---------- Магазин косметики ---------- */
+  /* ---------- Магазин казино (открывается на 6-м уровне) ---------- */
+  let shopCat = 'look';
   M.shop = () => {
-    const body = () => html`
-      <p class="sub">Покупается один раз, потом включается и выключается. Баланс: <span class="num">${U.fmt(S().balance)} E</span></p>
-      <div class="shop-grid">${C.SHOP.map((it) => {
-        const own = S().shopOwned[it.id], on = S().shopEquipped[it.id];
-        return html`<div class="shop-item">
-          <div class="top"><span class="si">${it.i}</span><div><b>${it.n}</b><div class="num muted" style="font-size:var(--fs-12)">${own ? (on ? 'надето' : 'куплено') : U.fmt(it.p) + ' E'}</div></div></div>
+    const body = () => {
+      const s = S();
+      const items = C.SHOP.filter((it) => it.cat === shopCat);
+      return html`
+      <div class="shop-top">
+        <div class="seg quiet" role="tablist" aria-label="Категории">${C.SHOP_CATS.map((c) => html`<button data-cat="${c.id}" aria-pressed="${c.id === shopCat}">${c.n}</button>`)}</div>
+        <span class="muted" style="font-size:var(--fs-14)">Баланс: <span class="num">${U.fmt(s.balance)} E</span></span>
+      </div>
+      <p class="sub">Покупается один раз. Оформление работает в казино и включается/выключается кнопкой.</p>
+      <div class="shop-grid">${items.map((it) => {
+        const own = s.shopOwned[it.id], on = s.shopEquipped[it.id];
+        const always = it.id === 'avatars'; // VIP-аватары просто появляются в профиле
+        return html`<div class="shop-item ${own ? 'owned' : ''}" data-item="${it.id}">
+          <div class="top"><span class="si">${it.i}</span><div><b>${it.n}</b><div class="num muted" style="font-size:var(--fs-12)">${own ? (always ? 'куплено' : on ? 'включено' : 'выключено') : U.fmt(it.p) + ' E'}</div></div></div>
           <p>${it.d}</p>
           ${own
-            ? html`<button class="btn ${on ? 'b-gho' : 'b-sec'} block" data-shop="toggle" data-id="${it.id}">${on ? 'Снять' : 'Надеть'}</button>`
-            : html`<button class="btn b-sec block" data-shop="buy" data-id="${it.id}" ${S().balance >= it.p ? '' : 'disabled'}>Купить · ${U.fmt(it.p)} E</button>`}
+            ? always
+              ? html`<button class="btn b-sec block" data-go="profile">Выбрать в профиле</button>`
+              : html`<button class="btn ${on ? 'b-gho' : 'b-sec'} block" data-shop="toggle" data-id="${it.id}" aria-pressed="${!!on}">${on ? 'Выключить' : 'Включить'}</button>`
+            : html`<button class="btn b-sec block" data-shop="buy" data-id="${it.id}" ${s.balance >= it.p ? '' : 'disabled'}>Купить · ${U.fmt(it.p)} E</button>`}
         </div>`;
       })}</div>`;
+    };
     EC.modal.open({
-      title: 'Магазин', wide: true, body: body(),
+      title: 'Магазин казино', wide: true, body: body(),
       onMount: (el) => {
         el.onclick = (e) => {
+          const c = e.target.closest('[data-cat]');
+          if (c) { shopCat = c.dataset.cat; EC.sound.play('click'); UI.set(el, body()); return; }
           const b = e.target.closest('[data-shop]');
           if (!b || b.disabled) return;
           if (b.dataset.shop === 'buy') {
-            if (EC.econ.buyShop(b.dataset.id)) { EC.sound.play('coin'); note('Куплено', C.SHOP.find((x) => x.id === b.dataset.id).n, '🛍'); }
+            if (EC.econ.buyShop(b.dataset.id)) {
+              EC.sound.play('coin');
+              note('Куплено', C.SHOP.find((x) => x.id === b.dataset.id).n, '🛍');
+              EC.app.track('event/shop-' + b.dataset.id);
+            }
           } else {
             EC.econ.toggleShop(b.dataset.id);
             EC.sound.play('click');
@@ -42,7 +60,7 @@
   /* ---------- Навыки ---------- */
   M.skills = () => {
     const body = () => html`
-      <p class="sub">Очко навыка — за каждый новый уровень (100 опыта). Свободно: <span class="num">${S().skillPoints}</span></p>
+      <p class="sub">Очко навыка — за каждый новый уровень казино. Свободно: <span class="num">${S().skillPoints}</span></p>
       <div class="skill-grid">${C.SKILLS.map((sk) => {
         const lvl = S().skills[sk.id] || 0, max = lvl >= sk.max;
         return html`<div class="skill">
@@ -104,10 +122,18 @@
   /* ---------- Достижения ---------- */
   M.achievements = () => {
     const s = S();
+    const list = C.ACH.filter((a) => a.cat === 'study' || EC.econ.casinoOpen());
+    const group = (cat, title, sub) => {
+      const items = list.filter((a) => a.cat === cat);
+      if (!items.length) return '';
+      return html`<h3 class="h-sub" style="margin:8px 0">${title} <span class="muted" style="font-size:var(--fs-12)">${sub}</span></h3>
+        <div class="ach-grid" style="margin-bottom:12px">${items.map((a) => html`<div class="ach ${s.ach[a.id] ? 'on' : ''}"><span class="ai">${s.ach[a.id] ? '★' : '☆'}</span><div><b>${a.n}</b><small>${a.d}</small></div></div>`)}</div>`;
+    };
     EC.modal.open({
       title: 'Достижения', wide: true,
-      body: html`<p class="sub">Каждое — <span class="num">+${C.ACH_REWARD} E</span>. Открыто ${C.ACH.filter((a) => s.ach[a.id]).length} из ${C.ACH.length}.</p>
-        <div class="ach-grid">${C.ACH.map((a) => html`<div class="ach ${s.ach[a.id] ? 'on' : ''}"><span class="ai">${s.ach[a.id] ? '★' : '☆'}</span><div><b>${a.n}</b><small>${a.d}</small></div></div>`)}</div>`,
+      body: html`<p class="sub">Открыто ${list.filter((a) => s.ach[a.id]).length} из ${list.length}.</p>
+        ${group('study', 'Учёба', 'за отметку в зачётке')}
+        ${group('casino', 'Казино', '+' + C.ACH_REWARD + ' E за каждое')}`,
     });
   };
 
@@ -126,9 +152,9 @@
         </div>
         <h3 class="h-sub" style="margin:16px 0 8px">По играм</h3>
         <div class="stat-grid four">${C.GAMES.map((g) => st(g.n, U.fmt(s.gamesBy[g.id] || 0)))}</div>
-        <h3 class="h-sub" style="margin:16px 0 8px">Заработок</h3>
+        <h3 class="h-sub" style="margin:16px 0 8px">Учёба</h3>
         <div class="stat-grid four">
-          ${st('Наботано', U.compact(s.earnTotal) + ' E')}${st('Кликов', U.fmt(s.clicks))}${st('За клик', U.compact(L.clickValue()) + ' E')}${st('Пассивно', U.rate(L.epsValue()) + ' E/с')}
+          ${st('Наботано', U.big(s.earnTotal) + ' E')}${st('Кликов', U.fmt(s.clicks))}${st('Сила клика', U.rate(L.getClickPower()) + ' E')}${st('В секунду', U.rate(L.getEps()) + ' E/с')}
         </div>
         <h3 class="h-sub" style="margin:16px 0 8px">Прочее</h3>
         <div class="stat-grid four">
@@ -155,12 +181,46 @@
       body: html`<div class="rules">
         ${order.map((id) => RULES[id])}
         <h3>Общее</h3>
-        <p>Егорики вымышленные, всё хранится только в этом браузере. VIP считается от суммы чистых выигрышей и поднимает минимальную ставку. Недельный ивент увеличивает чистый выигрыш (не ставку). Если закрыть страницу посреди раунда, ставка вернётся при следующем входе.</p>
+        <p>Егорики вымышленные, всё хранится только в этом браузере. Столы открываются с уровнем казино: опыт за раунд — 1 + число разрядов ставки после первого, за победу вдвое. VIP считается от суммы чистых выигрышей и поднимает минимальную ставку. Недельный ивент увеличивает чистый выигрыш (не ставку). Если закрыть страницу посреди раунда, ставка вернётся при следующем входе.</p>
+        <div class="brow" style="margin-top:16px"><button class="btn b-sec" data-go="fair">⚖ Как считаются шансы</button></div>
       </div>`,
     });
   };
 
+  /* ---------- «Честные шансы»: RTP каждой игры и ссылка на открытый код ---------- */
+  const FAIR = [
+    ['Кости', '100%', 'Равные шансы: больше сумма — ×2, ничья — возврат. Преимущества у казино нет.'],
+    ['Блэкджек', '≈ 99,5%', 'При базовой стратегии. 6 колод, дилер стоит на 17, BJ 3:2, дабл, сплит.'],
+    ['Баккара', '98,9% / 98,8% / 85,6%', 'Банкир / Игрок / Ничья — по стандартной таблице добора третьей карты.'],
+    ['Видеопокер', '≈ 98%', 'Jacks or Better 9/6 при оптимальной игре; роял платит ×250.'],
+    ['Холдем', '≈ 97,8%', 'Ultimate Texas Hold\'em: преимущество дилера ≈ 2,2% от анте при хорошей игре.'],
+    ['Рулетка', '97,3%', '36/37 для любой ставки: единственное преимущество казино — зеро.'],
+    ['Crash', '97%', 'Точка взрыва выбирается до старта: шанс дожить до ×M = 0,97 / M.'],
+    ['Слоты', '95,8% / 96,9% / 96,4%', 'Классика / Книга Егорика / Мегавейс. Посчитано скриптом по таблицам выплат (tests/slots-rtp.test.js).'],
+  ];
+  M.fair = () => {
+    EC.modal.open({
+      title: 'Честные шансы', wide: true,
+      body: html`<p class="sub">RTP — сколько из каждых 100 E ставок в среднем возвращается игроку на длинной дистанции. Никаких подкруток: весь код открыт, случайность — криптографическая (crypto.getRandomValues), колоды настоящие.</p>
+        <table class="fair-table">
+          <thead><tr><th>Игра</th><th>RTP</th><th>Откуда цифра</th></tr></thead>
+          <tbody>${FAIR.map(([g, r, d]) => html`<tr><td><b>${g}</b></td><td class="num">${r}</td><td>${d}</td></tr>`)}</tbody>
+        </table>
+        <p class="sub" style="margin-top:12px">Недельный ивент и бонусы (навыки, клевер) поднимают отдачу выше этих цифр — это подарок, а не подкрутка против игрока.</p>
+        <div class="brow"><a class="btn b-sec" href="${C.REPO_URL}" target="_blank" rel="noopener">Открыть код на GitHub ↗</a></div>`,
+    });
+  };
+
   /* ---------- Профиль (имя обязательно при первом входе) ---------- */
+  const refLink = () => C.SITE_URL + '?' + C.REF.param + '=' + (S().name || 'друг').replace(/[\s&#?%+/=]/g, encodeURIComponent);
+  const copyText = (text, ok, sub) => {
+    const done = () => note(ok, sub, '📋');
+    try {
+      navigator.clipboard.writeText(text).then(done, () => note('Не получилось скопировать', 'Выдели ссылку вручную', '!'));
+    } catch (e) { note('Не получилось скопировать', 'Выдели ссылку вручную', '!'); }
+  };
+  M.copyText = copyText;
+  M.refLink = refLink;
   M.profile = (force = false) => {
     const s = S();
     const locked = force && !s.name;
@@ -172,11 +232,15 @@
         <input id="nameIn" class="inp text" maxlength="20" autocomplete="off" placeholder="Например, Егор" value="${s.name}">
       </div>
       <div class="field" style="margin-top:16px"><span class="label">Аватар</span>
-        <div class="avatar-row" role="group" aria-label="Аватар">${C.AVATARS.map((a, i) => html`<button data-av="${i}" aria-pressed="${i === av}" aria-label="Аватар ${i + 1}">${a}</button>`)}</div>
+        <div class="avatar-row" role="group" aria-label="Аватар">${UI.avatarList().map((a, i) => html`<button data-av="${i}" aria-pressed="${i === av}" aria-label="Аватар ${i + 1}">${a}</button>`)}</div>
       </div>
+      ${locked ? '' : html`<div class="field" style="margin-top:16px"><span class="label">Позвать друга</span>
+        <div class="donate-row" style="justify-content:flex-start"><input class="inp text" id="refLink" readonly value="${refLink()}" style="flex:1;min-width:0"><button class="btn b-sec" id="refCopy">Скопировать</button></div>
+        <small class="muted" style="font-size:var(--fs-12)">Новичок по этой ссылке получит ${U.fmt(C.REF.bonus)} E на старт.</small>
+      </div>`}
       <div class="brow" style="margin-top:24px;justify-content:flex-end">
-        ${locked ? '' : html`<button class="btn b-gho" data-go="titles">Титулы</button>`}
-        <button class="btn b-pri" id="nameOk">${locked ? 'Войти в казино' : 'Сохранить'}</button>
+        ${locked || !EC.econ.casinoOpen() ? '' : html`<button class="btn b-gho" data-go="titles">Титулы</button>`}
+        <button class="btn b-pri" id="nameOk">${locked ? 'Начать' : 'Сохранить'}</button>
       </div>`;
     EC.modal.open({
       title: locked ? 'Добро пожаловать' : 'Профиль',
@@ -207,74 +271,32 @@
           EC.modal.close();
         };
         UI.$('#nameOk', el).onclick = apply;
+        const rc = UI.$('#refCopy', el);
+        if (rc) rc.onclick = () => copyText(UI.$('#refLink', el).value, 'Ссылка скопирована', 'Отправь другу в чат');
         input.addEventListener('keydown', (e) => { if (e.key === 'Enter') apply(); });
         setTimeout(() => { input.focus(); input.select(); }, 30);
       },
     });
   };
 
-  /* ---------- Банкрот ---------- */
+  /* ---------- «Отчислен из казино»: денег нет на минимальную ставку → назад к учёбе ---------- */
   M.bankrupt = () => {
     const s = S();
     EC.modal.open({
-      title: 'Пусто',
+      title: 'Отчислен из казино',
       body: html`<div class="bankrupt">
-        <p class="sign">БАНКРОТ</p>
-        <p class="sub" style="text-align:center;margin-top:12px">На минимальную ставку (${U.fmt(EC.econ.minBet())} E) не хватает. Можно наботать Егорики в «Заработке» — или начать всё с нуля.</p>
+        <p class="sign">ОТЧИСЛЕН</p>
+        <p class="sub" style="text-align:center;margin-top:12px">На минимальную ставку (${U.fmt(EC.econ.minBet())} E) не хватает. Не беда: сосед и кофе продолжают ботать, а зачётка всегда под рукой. Наботаешь — возвращайся.</p>
         <div class="stat-grid four" style="margin:16px 0">
           <div class="stat"><span class="label">Раунды</span><b>${U.fmt(s.games)}</b></div>
           <div class="stat"><span class="label">Победы</span><b>${U.fmt(s.wins)}</b></div>
           <div class="stat"><span class="label">Поражения</span><b>${U.fmt(s.losses)}</b></div>
-          <div class="stat"><span class="label">Лучший куш</span><b>${U.compact(s.biggestWin)}</b></div>
+          <div class="stat"><span class="label">Лучший куш</span><b>${U.big(s.biggestWin)}</b></div>
         </div>
         <div class="brow" style="justify-content:center">
-          <button class="btn b-pri lg" data-go="earn" data-close>Пойти ботать</button>
-          <button class="btn b-los lg" id="bkReset">Начать заново</button>
+          <button class="btn b-pri lg" data-go="study" data-close>Вернуться ботать</button>
         </div>
       </div>`,
-      onMount: (el) => {
-        const b = UI.$('#bkReset', el);
-        b.onclick = () => {
-          if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Точно? Всё сотрётся'; return; }
-          EC.modal.close(true);
-          EC.app.reset();
-        };
-      },
-    });
-  };
-
-  /* ---------- Туториал «Заработка» ---------- */
-  const TUT = [
-    { i: '📚', t: 'Жми «Ботать»', d: 'Каждый клик — Егорики на баланс. Иногда выпадает «автомат» и клик стоит в пять раз больше.' },
-    { i: '🧮', t: 'Учёба усиливает клик', d: `Конспекты, калькулятор, ноутбук — каждый уровень добавляет Егорики за клик. Цена растёт на ${Math.round((C.EARN.growth - 1) * 100)}% с каждым уровнем.` },
-    { i: '☕', t: 'Быт приносит сам', d: `Кофе, стипендия, сосед-отличник копят Егорики каждую секунду. Когда вкладка закрыта, доход идёт вполсилы — до ${C.EARN.offlineCapHours} часов.` },
-    { i: '🎰', t: 'Валюта общая с казино', d: 'Наботанное сразу на балансе — трать на столах, в магазине или задонать Егору. Переключатель режимов — в шапке.' },
-  ];
-  M.tutorial = () => {
-    let i = 0;
-    const body = () => html`
-      <div class="tut-step"><div class="ic">${TUT[i].i}</div><h3 class="h-block">${TUT[i].t}</h3><p>${TUT[i].d}</p></div>
-      <div class="tut-dots">${TUT.map((_, k) => html`<i class="${k === i ? 'on' : ''}"></i>`)}</div>
-      <div class="brow" style="justify-content:space-between">
-        <button class="btn b-gho" data-tut="prev" ${i === 0 ? 'disabled' : ''}>Назад</button>
-        <button class="btn b-pri" data-tut="next">${i === TUT.length - 1 ? 'Начать ботать' : 'Дальше'}</button>
-      </div>`;
-    const finish = () => { S().tutorialShown = true; EC.store.save(); };
-    EC.modal.open({
-      title: 'Как ботать',
-      body: body(),
-      onClose: finish,
-      onMount: (el) => {
-        el.onclick = (e) => {
-          const b = e.target.closest('[data-tut]');
-          if (!b || b.disabled) return;
-          if (b.dataset.tut === 'prev') i = Math.max(0, i - 1);
-          else if (i < TUT.length - 1) i++;
-          else { EC.modal.close(); return; }
-          EC.sound.play('click');
-          UI.set(el, body());
-        };
-      },
     });
   };
 
@@ -291,10 +313,10 @@
         ${sw('anim', 'Анимации', 'Выключи, если нужно быстро и без эффектов')}
         <div class="set-row"><div><b>Турбо</b><small>Скорость анимаций на столах, клавиша T</small></div>
           <div class="seg quiet">${[1, 2, 4].map((t) => html`<button data-turbo="${t}" aria-pressed="${s.turbo === t}">×${t}</button>`)}</div></div>
-        <div class="set-row"><div><b>Туториал «Заработка»</b><small>Показать ещё раз</small></div><button class="btn b-sec sm" data-go="tutorial">Показать</button></div>
+        <div class="set-row"><div><b>Обучение</b><small>Пройти подсказки на учёбе заново</small></div><button class="btn b-sec sm" id="tutBtn">Пройти заново</button></div>
         <div class="set-row"><div><b>Сохранение</b><small>Файл с прогрессом — перенести в другой браузер</small></div>
           <div class="brow"><button class="btn b-sec sm" id="exportBtn">Скачать</button><label class="btn b-sec sm">Загрузить<input id="importIn" type="file" accept="application/json" hidden></label></div></div>
-        <div class="set-row"><div><b>Сброс прогресса</b><small>Баланс, уровни, достижения — всё с нуля</small></div><button class="btn b-los sm" id="resetBtn">Сбросить</button></div>` : ''}
+        <div class="set-row"><div><b>Сброс прогресса</b><small>Снова первокурсник: учёба, уровни, достижения — всё с нуля</small></div><button class="btn b-los sm" id="resetBtn">Сбросить</button></div>` : ''}
       ${tab === 'sound' ? html`${sw('sound', 'Звук')}${range('volumeMaster', 'Общая громкость')}${range('volumeSfx', 'Эффекты')}${range('volumeUi', 'Интерфейс')}` : ''}
       ${tab === 'codes' ? html`
         <p class="sub">Секретные коды от разработчика.</p>
@@ -331,6 +353,7 @@
           EC.store.save();
         }));
         UI.$$('[data-vol]', el).forEach((r) => r.addEventListener('change', () => EC.sound.play('coin')));
+        UI.$('#tutBtn', el) && (UI.$('#tutBtn', el).onclick = () => EC.app.restartTutorial());
         const reset = UI.$('#resetBtn', el);
         if (reset) reset.onclick = () => {
           if (!reset.dataset.sure) { reset.dataset.sure = '1'; reset.textContent = 'Точно? Нажми ещё раз'; setTimeout(() => { if (reset.isConnected) { delete reset.dataset.sure; reset.textContent = 'Сбросить'; } }, 4000); return; }
@@ -354,9 +377,8 @@
           r.onload = () => {
             try {
               EC.store.replace(JSON.parse(r.result));
-              EC.earn.recompute(S());
               EC.modal.close(true);
-              EC.app.go('home', true);
+              EC.app.go(S().progress.casinoUnlocked ? '' : 'study', true);
               note('Сохранение загружено', 'С возвращением, ' + (S().name || 'игрок'), '✓');
             } catch (err) {
               note('Не получилось', 'Это не файл сохранения', '!');
@@ -384,7 +406,7 @@
       s.totalWon += net;
       EC.econ.checkTitles();
       EC.store.commit('balance');
-      EC.bus.emit('win', { net, bet: 100, label });
+      EC.bus.emit('win', { net, bet: 100, label, kind: 'win', cheat: true });
     };
     switch (c) {
       case 'money': EC.econ.addMoney(10000); EC.store.commit('balance'); EC.sound.play('coin'); return ok('+10 000 E');
@@ -399,6 +421,20 @@
       case 'boss': EC.modal.close(true); EC.fx.boss(); return;
       case 'kalyadka': EC.econ.unlock('kalyadka'); EC.store.commit('ach'); return ok('Спасибо, Калядка!');
       case 'vip3': s.totalWon = Math.max(s.totalWon, 50000); s.vip = 3; EC.econ.checkTitles(); EC.store.commit('vip'); return ok('Алмазный VIP');
+      case 'podval': // открыть казино без учёбы (для автора)
+        if (s.progress.casinoUnlocked) return ok('Подвал уже открыт');
+        s.earnTotal = Math.max(s.earnTotal, C.EARN.door.rumors);
+        EC.econ.addMoney(C.EARN.door.pass);
+        EC.modal.close(true);
+        EC.coach.stop();
+        s.progress.tutorialStep = 4;
+        if (EC.econ.buyPass()) EC.bus.emit('pass-bought');
+        return;
+      case 'lvl20':
+        if (!s.progress.casinoUnlocked) return UI.set(st, html`<span class="err">Сначала открой подвал</span>`);
+        EC.econ.addXp(Math.max(0, (C.xpForLevel(20) - s.xp) / EC.econ.xpMult()));
+        EC.store.commit('level');
+        return ok('Уровень ' + s.level + ' — все столы открыты');
       default: return UI.set(st, html`<span class="err">Такого кода нет</span>`);
     }
   };

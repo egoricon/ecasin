@@ -1,6 +1,8 @@
 /* Состояние игрока + шина событий.
    Главный паттерн: load() = сохранённое поверх DEF(). Новые поля просто появляются в DEF —
-   старые сейвы получают их значения по умолчанию, без версий и миграционных скриптов. */
+   старые сейвы получают их значения по умолчанию.
+   Версия 2 (роадмап прогрессии): блок progress, старт с учёбы, производные значения
+   (сила клика, доход в секунду) не хранятся — считаются из уровней апгрейдов. */
 (function (EC) {
   'use strict';
   const U = EC.util, C = EC.config;
@@ -17,8 +19,10 @@
 
   function DEF() {
     return {
+      version: C.VERSION,
       // профиль
       name: '', avatar: 0, nameBonusGiven: false,
+      refBy: '', refBonusGiven: false,
       title: '', titleManual: false, titlesSeen: [],
       // деньги и статистика казино
       balance: C.START_BALANCE,
@@ -47,12 +51,19 @@
       crashAuto: 2,
       pendingRound: null,
       bankruptShown: false,
-      // режим «Заработок»
-      mode: 'casino',
-      clickPower: C.EARN.baseClick, eps: 0,
+      // прогрессия «учёба → подвал → казино»
+      progress: {
+        tutorialStep: 0,        // 0–3 — шаги обучения, 4 — пройдено
+        casinoUnlocked: false,
+        passBought: false,
+        unlockSceneSeen: false,
+        freeSpinsLeft: 0,
+        seenUnlocks: {},        // { crash: true } — стол уже открывали, подсветка «новое» не нужна
+        mode: 'study',          // 'study' | 'casino'
+      },
+      // учёба (кликер): храним только уровни и счётчики
       clickerLvl: byId(C.EARN.upgrades, 0),
       lastTick: 0, earnFrac: 0, earnTotal: 0, clicks: 0, upgradesBought: 0,
-      tutorialShown: false,
       // настройки
       sound: true, volumeMaster: 0.7, volumeSfx: 1, volumeUi: 0.8,
       anim: true, turbo: 1,
@@ -78,19 +89,44 @@
     return out;
   }
 
-  // Старые сейвы хранили ach/shop массивами по индексу.
+  // Сейвы до версии 2: массивы по индексам, режим 'earn', старые id апгрейдов, нет блока progress.
   function migrateLegacy(raw) {
     if (!isObj(raw)) return {};
     const r = Object.assign({}, raw);
-    const arrToIds = (arr, list) => Object.fromEntries(list.map((x, i) => [x.id, !!arr[i]]));
-    if (Array.isArray(r.ach)) r.ach = arrToIds(r.ach, C.ACH);
+    const arrToIds = (arr, ids) => Object.fromEntries(ids.map((id, i) => [id, !!arr[i]]));
+    if (Array.isArray(r.ach)) r.ach = arrToIds(r.ach, C.ACH_LEGACY_ORDER);
     if (Array.isArray(r.shopOwned)) {
       const shift = r.shopOwned.length === 7 ? 1 : 0; // самая старая версия: 7 предметов, нужные 1..5
-      r.shopOwned = arrToIds(r.shopOwned.slice(shift), C.SHOP);
+      r.shopOwned = arrToIds(r.shopOwned.slice(shift), C.SHOP_LEGACY_ORDER);
     }
     if (Array.isArray(r.shopEquipped)) {
       const shift = r.shopEquipped.length === 7 ? 1 : 0;
-      r.shopEquipped = arrToIds(r.shopEquipped.slice(shift), C.SHOP);
+      r.shopEquipped = arrToIds(r.shopEquipped.slice(shift), C.SHOP_LEGACY_ORDER);
+    }
+    // Апгрейды прошлой версии кликера → новые id
+    if (isObj(r.clickerLvl)) {
+      const lv = {};
+      for (const [k, v] of Object.entries(r.clickerLvl)) {
+        const id = C.EARN.legacyIds[k] || k;
+        if (C.EARN.upgrades.some((u) => u.id === id)) lv[id] = Math.max(lv[id] || 0, U.num(v));
+      }
+      r.clickerLvl = lv;
+    }
+    // v1 → v2: ветеран (играл в казино или копил) сразу получает открытое казино, без обучения и сцены.
+    if (r.version !== C.VERSION && !isObj(r.progress)) {
+      const veteran = U.num(r.games) > 0 || U.num(r.balance) > 100;
+      if (veteran) {
+        r.progress = {
+          tutorialStep: 4, casinoUnlocked: true, passBought: true, unlockSceneSeen: true,
+          mode: r.mode === 'earn' ? 'study' : 'casino',
+          seenUnlocks: Object.fromEntries(C.GAMES.map((g) => [g.id, true])),
+        };
+        // Уровень по новой кривой XP: не ниже прежнего, за разницу — очки навыков.
+        const was = Math.max(1, Math.floor(U.num(r.level, 1)));
+        const now = C.levelForXp(U.num(r.xp));
+        if (now > was) { r.level = now; r.skillPoints = U.num(r.skillPoints) + (now - was); }
+        else r.xp = Math.max(U.num(r.xp), C.xpForLevel(was));
+      }
     }
     if (typeof r.vip === 'boolean') r.vip = r.vip ? 1 : 0;
     // В старой версии титул выбирали руками — не перетираем его автоматически.
@@ -102,14 +138,22 @@
     return r;
   }
 
+  const OBSOLETE = ['mode', 'clickPower', 'eps', 'tutorialShown', 'theme', 'autoPlay', 'lastVisit', 'lastDaily', 'speed'];
+
   function normalize(s) {
+    s.version = C.VERSION;
+    for (const k of OBSOLETE) delete s[k];
     s.balance = Math.max(0, Math.floor(U.num(s.balance, C.START_BALANCE)));
     s.level = Math.max(1, Math.floor(s.level));
-    if (s.avatar < 0 || s.avatar >= C.AVATARS.length) s.avatar = 0;
+    if (s.avatar < 0 || s.avatar >= C.AVATARS.length + C.VIP_AVATARS.length) s.avatar = 0;
     if (!C.SLOTS[s.slotVariant]) s.slotVariant = 'classic';
     if (![1, 2, 4].includes(s.turbo)) s.turbo = 1;
-    if (s.mode !== 'earn') s.mode = 'casino';
+    const p = s.progress;
+    p.tutorialStep = U.clamp(Math.floor(U.num(p.tutorialStep)), 0, 4);
+    if (p.mode !== 'casino' || !p.casinoUnlocked) p.mode = p.casinoUnlocked && p.mode === 'casino' ? 'casino' : 'study';
+    p.freeSpinsLeft = U.clamp(Math.floor(U.num(p.freeSpinsLeft)), 0, 10);
     s.name = String(s.name || '').slice(0, 20);
+    s.refBy = String(s.refBy || '').slice(0, 20);
     for (const k of ['volumeMaster', 'volumeSfx', 'volumeUi']) s[k] = U.clamp(s[k], 0, 1);
     for (const sk of C.SKILLS) {
       s.skills[sk.id] = U.clamp(Math.floor(U.num(s.skills[sk.id])), 0, sk.max);

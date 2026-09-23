@@ -1,8 +1,9 @@
 /* ==========================================================
-   EGOR CASINO — дизайн-токены «Неон»
-   Подключение: <body class="ds" data-mode="casino|earn">
-   Режим меняет только акцент и оттенок поверхностей —
-   все компоненты читают семантические токены и не знают о режиме.
+   EGOR CASINO — дизайн-токены
+   Подключение: <html data-theme="neon|bsuir"> + <body class="ds">
+   Две темы: «Неон» (казино) и «БГУИР» (учёба). Тема меняет только токены —
+   все компоненты читают семантические токены и не знают о теме.
+   Переключение в консоли: document.documentElement.dataset.theme = 'bsuir'
    ========================================================== */
 
 .ds {
@@ -99,6 +100,14 @@
   --wheel-zero:  var(--lime-700);
   --scrim:       color-mix(in srgb, var(--n-950) 72%, transparent);
   --shadow-pop:  0 24px 64px color-mix(in srgb, var(--n-950) 70%, transparent);
+  --ambient:     color-mix(in srgb, var(--accent) 11%, transparent); /* подсветка фона сверху */
+  --bdg-gold:    var(--gold-500);   /* цвета бейджей титулов — из палитры неонов */
+  --bdg-pink:    var(--pink-400);
+  --bdg-cyan:    var(--cyan-500);
+  --bdg-lime:    var(--lime-500);
+  --door-bg:     var(--n-900);
+  --door-tx:     var(--n-100);
+  --door-glow:   var(--pink-500);
   --topbar-h:    64px;
   --ticker-h:    34px;
 
@@ -107,20 +116,51 @@
   font-family: var(--font-ui);
 }
 
-/* ---------- Режим «Заработок»: лайм вместо розового ---------- */
-.ds[data-mode="earn"] {
-  --accent:       var(--lime-500);
-  --accent-hover: var(--lime-400);
-  --accent-deep:  var(--lime-700);
-  --on-accent:    var(--lime-950);
-  --bg:     #070A03;
-  --surf-1: #0D1305;
-  --surf-2: #141C08;
-  --surf-3: #1B260B;
-  --line:   #2B3A14;
-  --line-strong: #4F6624;
-  --tx-2:   #A8B894;
+/* ---------- Тема «БГУИР»: строгая, светлая, академичная, без свечения ---------- */
+/* Синий — ориентир из роадмапа; при необходимости сверить с брендбуком БГУИР. */
+[data-theme="bsuir"] .ds {
+  --bg:          #FFFFFF;
+  --surf-1:      #F4F7FB;
+  --surf-2:      #E8EEF6;
+  --surf-3:      #DCE4EF;
+  --line:        #D3DCE8;
+  --line-strong: #A7B5C8;
+  --tx:          #0F1E33;
+  --tx-2:        #4A5B73;
+  --tx-3:        #7C8BA1;
+
+  --accent:       #1B4F9C;
+  --accent-hover: #143D7A;
+  --accent-deep:  #0F2F5E;
+  --on-accent:    #FFFFFF;
+  --info:         #1B4F9C;   /* тот же синий — одна акцентная краска */
+  --on-info:      #FFFFFF;
+  --win:          #9A6400;   /* тёмное золото: читается на белом */
+  --on-win:       #FFFFFF;
+  --loss:         #B3261E;
+  --on-loss:      #FFFFFF;
+
+  --font-display: 'PT Serif', Georgia, serif;
+  --font-ui:      'PT Sans', system-ui, 'Segoe UI', sans-serif;
+  --font-num:     'PT Mono', ui-monospace, monospace;
+
+  --r-xs: 4px; --r-sm: 6px; --r-md: 10px; --r-lg: 10px;
+
+  --glow-1: 0 0 0 1px var(--accent);
+  --glow-2: 0 0 0 1px var(--accent);
+  --glow-win: 0 0 0 1px var(--win);
+  --neon-text: none;
+  --scrim: color-mix(in srgb, #0F1E33 45%, transparent);
+  --shadow-pop: 0 12px 32px color-mix(in srgb, #0F1E33 14%, transparent);
+  --ambient: transparent;
+  /* Бейджи на белом: те же оттенки, но тёмные — чтобы читались */
+  --bdg-gold: #8A5A00;
+  --bdg-pink: #A3135E;
+  --bdg-cyan: #00687A;
+  --bdg-lime: #3D6B00;
 }
+:root[data-theme="bsuir"] { color-scheme: light; }
+:root[data-theme="neon"], :root:not([data-theme]) { color-scheme: dark; }
 
 @media (prefers-reduced-motion: reduce) {
   .ds { --t-fast: 0ms; --t-base: 0ms; --t-slow: 0ms; }

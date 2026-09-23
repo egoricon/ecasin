@@ -8,6 +8,22 @@
 
   const E = {};
 
+  /* ---------- Что уже открыто (постепенное раскрытие) ---------- */
+  E.casinoOpen = (s = S()) => !!s.progress.casinoUnlocked;
+  // feature: quests | skills | shop | event | donate | vip | social | missions
+  E.isOpen = (feature, s = S()) => {
+    if (!E.casinoOpen(s)) return false;
+    if (feature === 'vip') return U.num(s.totalWon) >= C.VIP_OPEN_AT;
+    if (feature === 'social' || feature === 'missions') return true;
+    const f = C.FEATURES.find((x) => x.id === feature);
+    return !f || s.level >= f.lvl;
+  };
+  E.gameOpen = (id, s = S()) => {
+    const g = C.GAMES.find((x) => x.id === id);
+    return !!g && E.casinoOpen(s) && s.level >= g.lvl;
+  };
+  E.variantOpen = (v, s = S()) => !!C.SLOTS[v] && E.casinoOpen(s) && s.level >= C.SLOTS[v].lvl;
+
   /* ---------- Недельный ивент ---------- */
   E.week = () => {
     const s = S(), key = U.weekKey();
@@ -17,6 +33,8 @@
     }
     return s.weekEvent;
   };
+  // Множитель ивента действует, только когда ивент открыт (уровень 8).
+  E.weekMult = () => (E.isOpen('event') ? E.week().m : 1);
 
   /* ---------- VIP ---------- */
   E.vipLevel = (s = S()) => {
@@ -42,29 +60,50 @@
     s.balance = Math.max(0, Math.floor(s.balance + n));
   };
 
-  E.xpInLevel = (s = S()) => Math.floor(s.xp % 100);
+  /* ---------- Уровни казино ---------- */
+  // XP за раунд: 1 + floor(log10(ставки)), победа — вдвое больше.
+  E.xpForRound = (bet, won) => (1 + Math.floor(Math.log10(Math.max(1, bet)))) * (won ? 2 : 1);
+  E.xpMult = (s = S()) => (1 + 0.1 * (s.skills.xpBoost || 0)) * (s.shopEquipped.mascot ? 1.1 : 1);
+  E.levelInfo = (s = S()) => {
+    const from = C.xpForLevel(s.level), to = C.xpForLevel(s.level + 1);
+    const into = Math.max(0, s.xp - from), need = to - from;
+    return { level: s.level, into: Math.floor(into), need, pct: U.clamp((into / need) * 100, 0, 100), left: Math.ceil(to - s.xp) };
+  };
+  // Что открывается на уровне n — для тостов.
+  E.unlocksAt = (n) => {
+    const out = [];
+    C.GAMES.filter((g) => g.lvl === n).forEach((g) => out.push({ kind: 'game', id: g.id, n: 'Открыт стол: ' + g.n, icon: g.glyph }));
+    Object.entries(C.SLOTS).filter(([, v]) => v.lvl === n && n > 1).forEach(([id, v]) => out.push({ kind: 'variant', id, n: 'Открыт слот: ' + v.n, icon: '7' }));
+    C.FEATURES.filter((f) => f.lvl === n).forEach((f) => out.push({ kind: 'feature', id: f.id, n: 'Открыто: ' + f.n, icon: f.i }));
+    return out;
+  };
   E.addXp = (n) => {
     const s = S();
-    s.xp += U.num(n) * (1 + 0.1 * (s.skills.xpBoost || 0));
-    const lvl = Math.floor(s.xp / 100) + 1;
+    s.xp += U.num(n) * E.xpMult(s);
+    const lvl = C.levelForXp(s.xp);
     while (s.level < lvl) {
       s.level++;
       s.skillPoints++;
-      const bonus = 50 * s.level;
+      const bonus = C.LEVEL_REWARD * s.level;
       E.addMoney(bonus);
       note('Уровень ' + s.level, `+1 очко навыка · +${U.fmt(bonus)} E`, 'level', '⚡');
+      if (E.casinoOpen(s)) E.unlocksAt(s.level).forEach((u) => note(u.n, u.kind === 'game' ? 'Загляни в лобби' : '', 'unlock', u.icon));
       EC.bus.emit('sound', 'level');
+      EC.bus.emit('levelup', s.level);
     }
   };
 
   /* ---------- Достижения ---------- */
+  // Казино-достижения дают +100 E. Учебные — без денег: иначе они ломают выверенный темп старта.
+  E.achReward = (a) => (a.cat === 'study' ? 0 : C.ACH_REWARD);
   E.unlock = (id) => {
     const s = S();
     if (s.ach[id] !== false) return; // уже открыто или неизвестный id
     s.ach[id] = true;
-    E.addMoney(C.ACH_REWARD);
     const a = C.ACH.find((x) => x.id === id);
-    note('Достижение: ' + a.n, `${a.d} · +${C.ACH_REWARD} E`, 'ach', '★');
+    const r = E.achReward(a);
+    E.addMoney(r);
+    note('Достижение: ' + a.n, a.d + (r ? ` · +${r} E` : ''), 'ach', '★');
     EC.bus.emit('sound', 'win');
   };
 
@@ -103,6 +142,7 @@
     }).filter(Boolean);
   };
   E.tickQuest = (t, amount = 1) => {
+    if (!E.isOpen('quests')) return;
     E.refreshQuests();
     const s = S();
     for (const id of s.quests) {
@@ -140,7 +180,7 @@
   E.busy = false;
   E.beginRound = (game, bet) => {
     const s = S();
-    const allIn = bet >= s.balance;
+    const allIn = bet > 0 && bet >= s.balance;
     s.balance -= bet;
     s.pendingRound = { game, bet, t: Date.now() };
     E.busy = true;
@@ -183,13 +223,14 @@
     const s = S();
     bet = Math.max(0, U.int(bet));
     pay = Math.max(0, U.int(pay));
-    const ev = E.week();
+    const m = E.weekMult();
     let boost = 0;
     // Целочисленно, чтобы 100 × 0.2 не превращалось в 19.999…
-    if (pay > bet && ev.m !== 1) boost = Math.floor(((pay - bet) * Math.round((ev.m - 1) * 1000)) / 1000);
+    if (pay > bet && m !== 1) boost = Math.floor(((pay - bet) * Math.round((m - 1) * 1000)) / 1000);
     pay += boost;
     const net = pay - bet;
     const game = meta.game;
+    const xpBet = meta.nominal || bet; // бесплатный спин качает как обычная ставка
 
     s.totalBet += bet;
     s.games++;
@@ -202,7 +243,7 @@
       s.wins++;
       s.totalWon += net;
       s.biggestWin = Math.max(s.biggestWin, net);
-      E.addXp(2);
+      E.addXp(E.xpForRound(xpBet, true));
       E.unlock('first_win');
       if (net >= 1000) E.unlock('big_win');
       if (meta.allIn) E.unlock('all_in');
@@ -210,16 +251,16 @@
       const nv = E.vipLevel();
       if (nv > s.vip) {
         s.vip = nv;
-        note('VIP: ' + C.VIP[nv].n, `Минимальная ставка теперь ${C.VIP[nv].minBet} E`, 'win', '👑');
+        note('VIP: ' + C.VIP[nv].n, `Открыты VIP-уровни · минимальная ставка теперь ${C.VIP[nv].minBet} E`, 'win', '👑');
       }
     } else if (net < 0) {
       kind = 'loss';
       s.losses++;
-      E.addXp(1);
+      E.addXp(E.xpForRound(xpBet, false));
     } else {
       kind = 'push';
       s.pushes++;
-      E.addXp(1);
+      E.addXp(E.xpForRound(xpBet, false));
     }
     s.hist.unshift(kind === 'win' ? 'W' : kind === 'loss' ? 'L' : 'P');
     s.hist = s.hist.slice(0, 20);
@@ -234,10 +275,10 @@
     return result;
   };
 
-  /* ---------- Банкрот: не хватает даже на минимальную ставку ---------- */
+  /* ---------- «Отчислен из казино»: не хватает даже на минимальную ставку ---------- */
   E.checkBankrupt = () => {
     const s = S();
-    const broke = s.balance < E.minBet() && s.games > 0;
+    const broke = E.casinoOpen(s) && s.balance < E.minBet() && s.games > 0 && !s.progress.freeSpinsLeft;
     if (broke && !s.bankruptShown && !E.busy) {
       s.bankruptShown = true;
       EC.store.save();
@@ -288,10 +329,25 @@
     if (!sk || s.skillPoints < 1 || s.skills[id] >= sk.max) return false;
     s.skills[id]++;
     s.skillPoints--;
-    if (EC.earn) EC.earn.recompute(s);
     EC.store.commit('skills');
     return true;
   };
+
+  /* ---------- Пропуск в подвал: открывает казино ---------- */
+  E.canBuyPass = (s = S()) => !s.progress.passBought && s.earnTotal >= C.EARN.door.rumors;
+  E.buyPass = () => {
+    const s = S();
+    if (!E.canBuyPass(s) || s.balance < C.EARN.door.pass) return false;
+    s.balance -= C.EARN.door.pass;
+    s.progress.passBought = true;
+    s.progress.casinoUnlocked = true;
+    s.progress.freeSpinsLeft = C.EARN.freeSpins.count;
+    E.unlock('pass');
+    EC.store.commit('casino');
+    return true;
+  };
+  // Ставка бесплатного спина: 10% баланса, но не меньше 10 E.
+  E.freeSpinBet = (s = S()) => Math.max(C.EARN.freeSpins.min, Math.floor(s.balance * C.EARN.freeSpins.share));
 
   EC.econ = E;
 })(globalThis.EC = globalThis.EC || {});

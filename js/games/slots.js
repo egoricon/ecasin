@@ -41,30 +41,41 @@
     return parts.length ? parts.reduce((a, b) => html`${a} · ${b}`) : html`<span class="faint">${C.SLOTS[s.slotVariant].vol}</span>`;
   }
 
+  // Бесплатные спины новичку — только на «Классике».
+  const freeNow = (s = S()) => s.progress.freeSpinsLeft > 0 && s.slotVariant === 'classic';
+  const primaryLabel = (s = S()) => (freeNow(s) ? `🎁 Бесплатный спин · ${s.progress.freeSpinsLeft}` : 'Крутить');
+
   function mount(root) {
     const s = S();
+    if (!EC.econ.variantOpen(s.slotVariant)) s.slotVariant = 'classic';
     const V = C.SLOTS[s.slotVariant];
     if (!lastWindow) lastWindow = randWindow(V);
     const reels = lastWindow.map((col, r) => html`<div class="reel"><div class="strip" id="strip${r}">${col.map(cell)}</div></div>`);
-    const tabs = Object.entries(C.SLOTS).map(([id, v]) => html`<button data-act="variant" data-v="${id}" aria-pressed="${id === s.slotVariant}">${v.n}</button>`);
+    const tabs = Object.entries(C.SLOTS).map(([id, v]) => (EC.econ.variantOpen(id)
+      ? html`<button data-act="variant" data-v="${id}" aria-pressed="${id === s.slotVariant}">${v.n}</button>`
+      : html`<button data-act="variant" data-v="${id}" data-locked="1" aria-pressed="false" title="Откроется на уровне ${v.lvl}">🔒 ${v.n} · ур. ${v.lvl}</button>`));
 
     const ctx = EC.shell.mount(root, {
       id: 'slots',
       sub: V.n + ' · ' + V.vol,
       auto: true,
-      primary: 'Крутить',
+      primary: primaryLabel(s),
       table: html`
         <div class="seg quiet" role="group" aria-label="Стол" style="margin-bottom:16px">${tabs}</div>
         <div class="slot-machine" data-v="${s.slotVariant}">
           <div class="slot-sign">${V.sign}</div>
           <div class="reels">${reels}<div class="payline"></div></div>
-          <div class="slot-meta"><span id="slStatus">Удачи!</span><span id="slMeta">${metaHTML(s)}</span></div>
+          <div class="slot-meta"><span id="slStatus">${freeNow(s) ? 'Подарок новичку: спин за счёт заведения' : 'Удачи!'}</span><span id="slMeta">${metaHTML(s)}</span></div>
         </div>
         ${paytableHTML(V)}`,
     });
 
     ctx.onAct = (act, b) => {
       if (act !== 'variant' || ctx.locked) return;
+      if (b.dataset.locked) {
+        EC.fx.note({ title: 'Слот закрыт', text: C.SLOTS[b.dataset.v].n + ' откроется на уровне ' + C.SLOTS[b.dataset.v].lvl, icon: '🔒' });
+        return;
+      }
       S().slotVariant = b.dataset.v;
       EC.store.commit('slots');
       EC.sound.play('click');
@@ -73,10 +84,12 @@
 
     ctx.onPrimary = async () => {
       if (ctx.locked) return;
-      const bet = ctx.readBet();
-      if (!bet) return ctx.auto.stop();
       const st = S(), Vc = C.SLOTS[st.slotVariant];
-      const round = EC.econ.beginRound('slots', bet);
+      const free = freeNow(st);
+      const bet = free ? EC.econ.freeSpinBet(st) : ctx.readBet();
+      if (!bet) return ctx.auto.stop();
+      if (free) { st.progress.freeSpinsLeft--; ctx.auto.stop(); }
+      const round = EC.econ.beginRound('slots', free ? 0 : bet);
       ctx.lock(true);
       ctx.setPrimary('Крутится…', { disabled: true });
       ctx.result(null);
@@ -122,7 +135,8 @@
       if (ev.line && ev.line.sym === 5 && ev.line.count === 3) EC.econ.unlock('triple_777');
 
       let pay = Math.floor(bet * ev.m * mul.total);
-      let label = Vc.n;
+      let label = (free ? 'Бесплатный спин · ' : '') + Vc.n;
+      const triple7 = ev.line && ev.line.sym === 5 && ev.line.count === 3;
       if (ev.line) label += ` · ${ev.line.count}× ${C.SLOT_SYMBOLS[ev.line.sym].n}`;
       if (ev.scatter.m) label += ` · ${ev.scatter.count}× $`;
 
@@ -141,14 +155,14 @@
       }
 
       if (st.slotVariant === 'mega') st.megaStreak = pay > bet ? Math.min(16, st.megaStreak + 1) : 0;
-      const res = round.end(pay, { label });
-      UI.text(ctx.$('#slStatus'), res.kind === 'win' ? 'Есть!' : res.kind === 'push' ? 'Возврат ставки' : 'Мимо');
+      const res = round.end(pay, { label, nominal: free ? bet : 0, share: triple7 ? 'Triple 777' : '' });
+      UI.text(ctx.$('#slStatus'), res.kind === 'win' ? 'Есть!' : free ? 'Мимо — бесплатно' : res.kind === 'push' ? 'Возврат ставки' : 'Мимо');
       UI.set(ctx.$('#slMeta'), metaHTML(st));
       ctx.result(res, label);
       ctx.lock(false);
       ctx.$$('.seg button').forEach((x) => { x.disabled = false; });
-      ctx.setPrimary('Крутить');
-      ctx.done();
+      ctx.setPrimary(primaryLabel());
+      if (!free) ctx.done();
     };
     return ctx;
   }

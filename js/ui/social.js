@@ -54,6 +54,11 @@
   }
 
   EC.social = {
+    // Лента и чат живут только в казино.
+    setVisible(v) {
+      UI.$('#ticker').hidden = !v;
+      UI.$('#chat').hidden = !v;
+    },
     start() {
       fillTicker();
       for (let i = 0; i < 4; i++) chatLine();

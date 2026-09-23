@@ -67,26 +67,46 @@
     { min: 50, n: 'MEGA WIN', sub: 'Крупная победа', parts: 70 },
     { min: 10, n: 'SUPER WIN', sub: 'Отличный результат', parts: 40 },
   ];
+  // Повод поделиться: редкие события (или null).
+  const shareReason = (res, ratio) => {
+    const m = res.meta || {};
+    if (res.cheat || res.kind !== 'win') return null;
+    if (m.share) return m.share;
+    if (m.allIn) return 'Ва-банк';
+    if (ratio >= 50) return (ratio >= 200 ? 'ULTRA WIN' : 'MEGA WIN') + ' · ' + (m.label || EC.config.GAME_NAME[res.game] || '');
+    return null;
+  };
   FX.win = (res) => {
     FX.pulseBalance();
     FX.floatWin(res.net);
-    const ratio = res.bet > 0 ? res.net / res.bet : 0;
+    const base = res.bet || (res.meta && res.meta.nominal) || 0;
+    const ratio = base > 0 ? res.net / base : 0;
     const tier = TIERS.find((t) => ratio >= t.min);
-    if (!tier) { EC.sound.play('coin'); return; }
-    EC.sound.play(tier.min >= 50 ? 'bonus' : 'win');
-    FX.particles(tier.parts);
+    const reason = shareReason(res, ratio);
+    const s = EC.store.state;
+    // Конфетти-пушка из магазина: салют на выигрышах от ×5
+    if (s.shopEquipped.confetti && (ratio + 1) >= 5) FX.particles(tier ? 30 : 60, ['🎉', '🎊', '✨', '◆']);
+    if (!tier && !reason) { EC.sound.play('coin'); return; }
+    EC.sound.play(reason ? 'jackpot' : tier.min >= 50 ? 'bonus' : 'win');
+    if (tier) FX.particles(tier.parts);
+    const t = tier || TIERS[TIERS.length - 1];
     const o = document.createElement('div');
     o.className = 'win-ov';
     o.innerHTML = String(html`<div class="win-card" role="alert">
-      <div class="win-tier">${tier.n}</div>
+      <div class="win-tier">${reason && !tier ? reason.split(' · ')[0].toUpperCase() : t.n}</div>
       <div class="win-amt">+${U.fmt(res.net)} E</div>
-      <div class="win-sub"><span class="num">${U.mult(ratio + 1)}</span> от ставки · ${res.label || (res.meta && res.meta.label) || EC.config.GAME_NAME[res.game] || ''} · ${tier.sub}</div>
+      <div class="win-sub">${base ? html`<span class="num">${U.mult(ratio + 1)}</span> от ставки · ` : ''}${res.label || (res.meta && res.meta.label) || EC.config.GAME_NAME[res.game] || ''}</div>
+      ${reason ? html`<div class="brow" style="justify-content:center;margin-top:16px"><button class="btn b-win" data-share>Поделиться</button><button class="btn b-gho" data-ok>Круто</button></div>` : ''}
     </div>`);
     document.body.appendChild(o);
     requestAnimationFrame(() => o.classList.add('show'));
-    const close = () => { o.classList.remove('show'); setTimeout(() => o.remove(), 250); };
-    o.addEventListener('click', close);
-    setTimeout(close, 2600);
+    let closed = false;
+    const close = () => { if (closed) return; closed = true; o.classList.remove('show'); setTimeout(() => o.remove(), 250); };
+    o.addEventListener('click', (e) => {
+      if (e.target.closest('[data-share]')) { close(); EC.share.open(res, reason); return; }
+      close();
+    });
+    setTimeout(close, reason ? 7000 : 2600);
   };
 
   /* ---------- Пасхалки ---------- */

@@ -16,11 +16,12 @@
   }
 
   function metaHTML(id) {
-    const s = S(), ev = EC.econ.week(), vip = C.VIP[EC.econ.vipLevel()];
+    const s = S(), E = EC.econ, ev = E.week(), vip = C.VIP[E.vipLevel()], li = E.levelInfo();
     return html`
-      <div><span>Мин. ставка</span><span class="num">${U.fmt(EC.econ.minBet())} E</span></div>
-      <div><span>VIP</span><span>${vip.n}</span></div>
-      <div><span>${ev.n}</span><span class="num">${ev.m !== 1 ? '+' + Math.round((ev.m - 1) * 100) + '%' : '×1'}</span></div>
+      <div><span>Мин. ставка</span><span class="num">${U.fmt(E.minBet())} E</span></div>
+      <div><span>Уровень ${s.level}</span><span class="num">${U.fmt(li.into)} / ${U.fmt(li.need)} XP</span></div>
+      ${E.isOpen('vip') ? html`<div><span>VIP</span><span>${vip.n}</span></div>` : ''}
+      ${E.isOpen('event') ? html`<div><span>${ev.n}</span><span class="num">${ev.m !== 1 ? '+' + Math.round((ev.m - 1) * 100) + '%' : '×1'}</span></div>` : ''}
       <div><span>Сыграно здесь</span><span class="num">${U.fmt(s.gamesBy[id] || 0)}</span></div>`;
   }
 

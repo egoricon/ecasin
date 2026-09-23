@@ -82,7 +82,7 @@
       render(ev.m > 0 ? (c) => (!groupRanks || groupRanks.has(key(c)) ? (won ? 'win' : '') : 'dim') : null);
       if (ev.row) ctx.$(`.vp-row[data-cat="${ev.row.cat}"]`).classList.add(won ? 'hit' : 'push');
       UI.text(ctx.$('#vpStatus'), ev.m > 0 ? ev.name + ' · ×' + ev.m : ev.name + ' — без выплаты');
-      const res = h.round.end(pay, { label: 'Видеопокер, ' + ev.name.toLowerCase() });
+      const res = h.round.end(pay, { label: 'Видеопокер, ' + ev.name.toLowerCase(), share: ev.cat >= P.CAT.STRAIGHT_FLUSH ? ev.name + ' в видеопокере' : '' });
       ctx.result(res, ev.name);
       ctx.lock(false);
       ctx.setPrimary('Раздать');
