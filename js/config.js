@@ -217,10 +217,8 @@
   /* ---------- Реферал: ?ref=Имя в ссылке ---------- */
   C.REF = { param: 'ref', bonus: 500 };
 
-  /* ---------- Аналитика (выключена) ----------
-     Чтобы включить: завести бесплатный счётчик на goatcounter.com и вписать адрес вида
-     'https://ИМЯ.goatcounter.com/count'. Без cookie, баннер не нужен. */
-  C.ANALYTICS = { goatcounter: '' };
+  /* ---------- Аналитика: приватный счётчик на goatcounter.com, без cookie и баннера ---------- */
+  C.ANALYTICS = { goatcounter: 'https://egor-casino.goatcounter.com/count' };
 
   C.DONATE_PRESETS = [50, 100, 250, 500, 1000, 5000];
 
