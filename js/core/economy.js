@@ -72,7 +72,7 @@
   // Что открывается на уровне n — для тостов.
   E.unlocksAt = (n) => {
     const out = [];
-    C.GAMES.filter((g) => g.lvl === n).forEach((g) => out.push({ kind: 'game', id: g.id, n: 'Открыт стол: ' + g.n, icon: g.glyph }));
+    C.GAMES.filter((g) => g.lvl === n).forEach((g) => out.push({ kind: 'game', id: g.id, n: (g.kind === 'machine' ? 'Открыт автомат: ' : 'Открыт стол: ') + g.n, icon: g.glyph }));
     Object.entries(C.SLOTS).filter(([, v]) => v.lvl === n && n > 1).forEach(([id, v]) => out.push({ kind: 'variant', id, n: 'Открыт слот: ' + v.n, icon: '7' }));
     C.FEATURES.filter((f) => f.lvl === n).forEach((f) => out.push({ kind: 'feature', id: f.id, n: 'Открыто: ' + f.n, icon: f.i }));
     return out;

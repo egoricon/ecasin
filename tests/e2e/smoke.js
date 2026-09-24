@@ -133,6 +133,45 @@ require('fs').mkdirSync(OUT, { recursive: true });
   await play('video', async () => { await primary(); await page.waitForTimeout(400); await page.click('[data-i="0"]'); await primary(); });
   await play('dice', async () => { await primary(); });
 
+  /* ---------- 4б. Автоматы: лобби, спин, «Инфо», автоигра останавливается без Егориков ---------- */
+  const MACHINES = ['mini777', 'knowledge', 'fishing', 'clusters'];
+  await ev(page, () => { location.hash = '#/'; });
+  await page.waitForTimeout(300);
+  check(await ev(page, (ids) => ids.every((id) => document.querySelector(`.games.machines [data-go="game"][data-id="${id}"]`)), MACHINES), 'не все автоматы в лобби');
+  for (const id of MACHINES) {
+    const g0 = await ev(page, (g) => EC.store.state.gamesBy[g], id);
+    await play(id, primary);
+    check(await ev(page, (g) => EC.store.state.gamesBy[g], id) === g0 + 1, id + ': спин не засчитан ровно один раз');
+    check(await ev(page, () => EC.store.state.pendingRound === null), id + ': раунд не закрыт');
+    await page.click('[data-act="info"]');
+    await page.waitForSelector('.m-info .m-pay');
+    await shot(page, 'machine-' + id + '-info');
+    await page.keyboard.press('Escape');
+  }
+  // Автоигра ×25 при балансе на 3 минимальные ставки: три проигрыша подряд — и стоп (исход подменён на проигрышный только для теста)
+  await ev(page, () => { location.hash = '#/game/mini777'; });
+  await page.waitForSelector('#primaryBtn');
+  const minB = await ev(page, () => Math.max(EC.econ.minBet(), EC.config.MACHINES.mini777.minBet)); // VIP поднимает минимум
+  await ev(page, (b) => {
+    const L = EC.machines.logic.mini777, orig = L.play;
+    L.play = (M, rnd) => { let o; do { o = orig(M, rnd); } while (o.m > 0); return o; };
+    window.__restorePlay = () => { L.play = orig; };
+    EC.store.state.balance = 3 * b; EC.store.commit('balance');
+  }, minB);
+  await page.fill('#betIn', String(minB));
+  const a0 = await ev(page, () => EC.store.state.gamesBy.mini777);
+  await page.click('[data-auto="25"]');
+  await page.waitForFunction(() => document.getElementById('autoStop').hidden && !EC.econ.busy, null, { timeout: 30000 });
+  await page.waitForTimeout(1500);
+  const auto = await ev(page, () => ({ bal: EC.store.state.balance, lbl: document.getElementById('autoLbl').textContent }));
+  // Пассивный доход учёбы может докапать пару Егориков — важно, что денег меньше ставки и автоигра стоит
+  const spun = await ev(page, () => EC.store.state.gamesBy.mini777) - a0;
+  check(auto.bal < minB && auto.lbl === 'Автоигра', 'автоигра не остановилась: ' + JSON.stringify(auto));
+  check(spun >= 3 && spun < 25, 'автоигра без денег не остановилась вовремя: ' + spun + ' спинов');
+  await ev(page, () => { window.__restorePlay(); EC.modal.close(true); EC.store.state.balance = 50000; EC.store.commit('balance'); EC.econ.checkBankrupt(); });
+  await page.waitForTimeout(1000);
+  await ev(page, () => EC.modal.close(true));
+
   /* ---------- 5. Магазин: каждый предмет покупается и работает ---------- */
   await ev(page, () => { location.hash = '#/'; EC.store.state.balance = 100000; EC.store.commit('balance'); });
   await page.waitForTimeout(300);

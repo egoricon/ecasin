@@ -6,8 +6,11 @@
 
   let current = null;
 
-  function defaultBet(id) {
-    const s = S(), min = EC.econ.minBet();
+  // Минимальная ставка: VIP-минимум или минимум самой игры (cfg.minBet у автоматов), что больше.
+  const minFor = (cfg) => Math.max(EC.econ.minBet(), (cfg && cfg.minBet) || 0);
+
+  function defaultBet(id, cfg) {
+    const s = S(), min = minFor(cfg);
     let v = U.num(s.lastBets && s.lastBets[id]);
     if (!v) v = Math.floor(s.balance * 0.05);
     v = Math.max(min, v);
@@ -15,10 +18,10 @@
     return Math.max(1, v);
   }
 
-  function metaHTML(id) {
+  function metaHTML(id, cfg) {
     const s = S(), E = EC.econ, ev = E.week(), vip = C.VIP[E.vipLevel()], li = E.levelInfo();
     return html`
-      <div><span>Мин. ставка</span><span class="num">${U.fmt(E.minBet())} E</span></div>
+      <div><span>Мин. ставка</span><span class="num">${U.fmt(minFor(cfg))} E</span></div>
       <div><span>Уровень ${s.level}</span><span class="num">${U.fmt(li.into)} / ${U.fmt(li.need)} XP</span></div>
       ${E.isOpen('vip') ? html`<div><span>VIP</span><span>${vip.n}</span></div>` : ''}
       ${E.isOpen('event') ? html`<div><span>${ev.n}</span><span class="num">${ev.m !== 1 ? '+' + Math.round((ev.m - 1) * 100) + '%' : '×1'}</span></div>` : ''}
@@ -64,12 +67,12 @@
             <button class="chip" data-auto="25">×25</button>
             <button class="chip" data-auto="0" hidden id="autoStop">Стоп</button>
           </div>` : ''}
-          <div class="meta-list" id="betMeta">${metaHTML(cfg.id)}</div>
+          <div class="meta-list" id="betMeta">${metaHTML(cfg.id, cfg)}</div>
         </aside>
       </div>`);
 
     const input = UI.$('#betIn', root);
-    input.value = defaultBet(cfg.id);
+    input.value = defaultBet(cfg.id, cfg);
     const primaryBtn = UI.$('#primaryBtn', root);
 
     const ctx = {
@@ -87,7 +90,7 @@
     ctx.setBet = (v) => { input.value = Math.max(1, Math.floor(v)); };
     // Проверка ставки. need — во сколько раз больше ставки должно быть на балансе (холдем: ×3).
     ctx.readBet = (need = 1) => {
-      const s = S(), min = EC.econ.minBet();
+      const s = S(), min = minFor(cfg);
       const v = Math.floor(Number(input.value));
       const fail = (t, x) => {
         EC.bus.emit('note', { title: t, text: x, kind: 'info', icon: '!' });
@@ -96,7 +99,7 @@
       };
       if (s.balance < min * need) return fail('Не хватает Егориков', 'Загляни в «Заработок» — там можно наботать');
       if (!Number.isFinite(v) || v < 1) return fail('Введи ставку', 'Целое число от ' + U.fmt(min) + ' E');
-      if (v < min) return fail('Слишком мало', 'Минимальная ставка для твоего VIP — ' + U.fmt(min) + ' E');
+      if (v < min) return fail('Слишком мало', (cfg.minBet >= min ? 'Минимальная ставка здесь — ' : 'Минимальная ставка для твоего VIP — ') + U.fmt(min) + ' E');
       if (v * need > s.balance) {
         return fail('Слишком много', need > 1 ? `Нужно ${need}× ставки на балансе: ${U.fmt(v * need)} E` : 'На балансе ' + U.fmt(s.balance) + ' E');
       }
@@ -153,13 +156,13 @@
       ctx.auto.t = setTimeout(() => { if (current === ctx && !ctx.locked && ctx.onPrimary) ctx.onPrimary(); }, 500 / UI.speed());
     };
 
-    const updHint = () => UI.text(UI.$('#betHint', root), 'мин ' + U.fmt(EC.econ.minBet()));
+    const updHint = () => UI.text(UI.$('#betHint', root), 'мин ' + U.fmt(minFor(cfg)));
     updHint();
 
     root.onclick = (e) => {
       const b = e.target.closest('[data-bet],[data-act],[data-auto]');
       if (!b || b.disabled) return;
-      const s = S(), min = EC.econ.minBet(), cur = Math.floor(Number(input.value)) || min;
+      const s = S(), min = minFor(cfg), cur = Math.floor(Number(input.value)) || min;
       if (b.dataset.bet) {
         const k = b.dataset.bet;
         const v = k === 'min' ? min : k === 'half' ? cur / 2 : k === 'double' ? cur * 2 : k === 'q' ? s.balance * 0.25 : s.balance;
@@ -187,7 +190,7 @@
 
     const offChange = EC.bus.on('change', () => {
       const m = UI.$('#betMeta', root);
-      if (m) UI.set(m, metaHTML(cfg.id));
+      if (m) UI.set(m, metaHTML(cfg.id, cfg));
       updHint();
     });
     ctx.cleanup.push(offChange);

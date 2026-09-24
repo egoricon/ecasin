@@ -52,9 +52,9 @@
     </aside>`;
   }
 
-  function gamesHTML() {
+  function gamesHTML(list) {
     const s = S(), E = EC.econ;
-    return C.GAMES.map((g) => {
+    return list.map((g) => {
       if (!E.gameOpen(g.id)) {
         return html`<button class="gcard locked" data-go="locked" data-id="${g.id}" aria-label="${g.n}: откроется на уровне ${g.lvl}">
           <span class="glyph" aria-hidden="true">🔒</span>
@@ -130,7 +130,10 @@
       </section>
 
       <div class="section-head"><h2 class="h-block">Столы</h2><p>Минимальная ставка сейчас — <span class="num">${U.fmt(E.minBet())} E</span></p></div>
-      <div class="games">${gamesHTML()}</div>
+      <div class="games">${gamesHTML(C.GAMES.filter((g) => g.kind !== 'machine'))}</div>
+
+      <div class="section-head"><h2 class="h-block">Автоматы</h2><p>Фриспины, каскады, Hold &amp; Spin и нюдж</p></div>
+      <div class="games machines">${gamesHTML(C.GAMES.filter((g) => g.kind === 'machine'))}</div>
 
       <div class="section-head"><h2 class="h-block">Прогресс</h2></div>
       <div class="home-grid" data-n="${panels.length}">${panels}</div>

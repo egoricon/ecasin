@@ -22,6 +22,11 @@ const FILES = [
   'js/core/store.js',
   'js/core/economy.js',
   'js/earn/logic.js',
+  'js/rules/machines.js',
+  'js/rules/m-knowledge.js',
+  'js/rules/m-clusters.js',
+  'js/rules/m-fishing.js',
+  'js/rules/m-mini777.js',
 ];
 for (const f of FILES) require(path.join(__dirname, '..', f));
 

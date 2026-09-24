@@ -1,0 +1,90 @@
+/* ==========================================================
+   Автоматы: Книга Знаний, Кибер-Кластеры, Рыбалка на Свислочи, Мини-777.
+   Только токены. У каждого автомата своя пара неонов (--m-a, --m-b);
+   золото (--win) — только на выигрышных клетках и линиях.
+   ========================================================== */
+
+.mach { --m-a: var(--pink-500); --m-b: var(--cyan-500); position: relative; background: var(--surf-2); border-radius: var(--r-lg); padding: var(--sp-4); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--m-a) 35%, transparent); }
+.mach[data-m="knowledge"] { --m-a: var(--cyan-500); --m-b: var(--pink-500); }
+.mach[data-m="clusters"] { --m-a: var(--pink-500); --m-b: var(--cyan-500); }
+.mach[data-m="fishing"] { --m-a: var(--cyan-500); --m-b: var(--lime-500); }
+.mach[data-m="mini777"] { --m-a: var(--lime-500); --m-b: var(--pink-500); }
+.m-sign { text-align: center; font: 400 var(--fs-24)/1.1 var(--font-display); color: var(--m-a); letter-spacing: .04em; text-shadow: 0 0 14px color-mix(in srgb, var(--m-a) 55%, transparent); margin-bottom: var(--sp-2); }
+.m-bar { min-height: 44px; display: flex; align-items: center; justify-content: center; gap: var(--sp-2); flex-wrap: wrap; text-align: center; font-size: var(--fs-14); color: var(--tx-2); margin-bottom: var(--sp-3); }
+.m-bar b { color: var(--tx); font-weight: 600; }
+.m-bar .num { color: var(--info); }
+.m-bar .ms { font-size: 1.3em; }
+.m-pick { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: var(--r-sm); background: var(--surf-1); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.m-pick.on { box-shadow: 0 0 0 2px var(--m-a), 0 0 18px color-mix(in srgb, var(--m-a) 50%, transparent); }
+
+/* ---------- Сетка ---------- */
+.m-grid { position: relative; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 6px; padding: 6px; border-radius: var(--r-md); background: var(--surf-1); max-width: calc(var(--cols) * 104px); margin: 0 auto; }
+.m-cell { position: relative; aspect-ratio: 1; min-width: 0; border-radius: var(--r-sm); background: var(--surf-2); display: grid; place-items: center; overflow: hidden; transition: background var(--t-base), box-shadow var(--t-base), opacity var(--t-base); }
+.m-cell .ms { font-size: clamp(20px, 4.2vw, 40px); line-height: 1; user-select: none; }
+.m-cell.spin .ms { filter: blur(1.5px); opacity: .75; }
+.m-cell.win { background: color-mix(in srgb, var(--win) 14%, var(--surf-2)); box-shadow: inset 0 0 0 2px var(--win); }
+.m-cell.dim { opacity: .35; }
+.m-cell.exp { background: color-mix(in srgb, var(--m-a) 20%, var(--surf-2)); box-shadow: inset 0 0 0 2px var(--m-a), 0 0 16px color-mix(in srgb, var(--m-a) 40%, transparent); }
+.m-cell.hold { box-shadow: inset 0 0 0 2px var(--m-b); background: color-mix(in srgb, var(--m-b) 14%, var(--surf-2)); }
+.m-cell.pop { animation: mPop .32s var(--ease-out) forwards; }
+.m-cell.drop .ms { animation: mDrop .3s var(--ease-snap) both; }
+@keyframes mPop { to { transform: scale(.4); opacity: 0; } }
+@keyframes mDrop { from { transform: translateY(-120%); opacity: 0; } }
+.m-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.m-lines polyline { fill: none; stroke: var(--win); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; opacity: .85; filter: drop-shadow(0 0 4px var(--win)); }
+
+/* Подписи на клетках: номинал рыбы, множитель клетки */
+.m-tag { position: absolute; left: 3px; right: 3px; bottom: 3px; text-align: center; font: 600 clamp(9px, 2vw, 12px)/1.2 var(--font-num); color: var(--info); background: color-mix(in srgb, var(--n-950) 70%, transparent); border-radius: 4px; padding: 1px 0; }
+.m-x { position: absolute; top: 3px; right: 3px; font: 600 clamp(9px, 2vw, 12px)/1 var(--font-num); color: var(--m-a); background: color-mix(in srgb, var(--n-950) 75%, transparent); border-radius: 4px; padding: 2px 4px; }
+.m-cell.xcell { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--m-a) 70%, transparent); }
+
+/* ---------- Символы, нарисованные CSS (Мини-777, скаттеры) ---------- */
+.ms.s7 { font: 400 clamp(28px, 7vw, 56px)/1 var(--font-display); }
+.ms.s7.c { color: var(--cyan-500); text-shadow: 0 0 12px color-mix(in srgb, var(--cyan-500) 60%, transparent); }
+.ms.s7.p { color: var(--pink-400); text-shadow: 0 0 12px color-mix(in srgb, var(--pink-500) 60%, transparent); }
+.ms.s7.l { color: var(--lime-500); text-shadow: 0 0 12px color-mix(in srgb, var(--lime-500) 60%, transparent); }
+.ms.bar-sym { font: 400 clamp(12px, 3vw, 20px)/1 var(--font-display); color: var(--n-0); padding: 4px 6px; border-radius: 4px; box-shadow: inset 0 0 0 2px var(--m-a); letter-spacing: .06em; }
+.ms.glitch { font: 400 clamp(20px, 4.2vw, 36px)/1 var(--font-display); color: var(--m-b); text-shadow: 2px 0 var(--pink-500), -2px 0 var(--cyan-500); }
+.m-info .ms, .m-bar .ms.glitch, .m-bar .ms.s7 { font-size: 1.15em; }
+
+/* ---------- Мини-777: барабаны с соседними символами для нюджа ---------- */
+.m-grid.mini { --cols: 3; max-width: 360px; }
+.m-grid.mini .m-cell .ms { font-size: clamp(30px, 9vw, 48px); }
+.m-grid.mini .m-cell .ms.s7 { font-size: clamp(44px, 13vw, 68px); }
+.m-grid.mini .m-cell .ms.bar-sym { font-size: clamp(15px, 4.5vw, 22px); }
+.m-grid .nudge-up .ms { animation: mNudgeUp .35s var(--ease-snap); }
+.m-grid .nudge-down .ms { animation: mNudgeDown .35s var(--ease-snap); }
+@keyframes mNudgeUp { from { transform: translateY(100%); } }
+@keyframes mNudgeDown { from { transform: translateY(-100%); } }
+.m-mult { display: inline-grid; place-items: center; min-width: 56px; height: 44px; padding: 0 10px; border-radius: var(--r-sm); font: 500 var(--fs-20) var(--font-num); color: var(--m-a); box-shadow: inset 0 0 0 2px var(--m-a); }
+
+/* ---------- Окно «Инфо» ---------- */
+.m-pay { width: 100%; border-collapse: collapse; font-size: var(--fs-14); margin: var(--sp-2) 0; }
+.m-pay th { text-align: left; font: 600 var(--fs-12) var(--font-ui); color: var(--tx-2); padding: 0 6px 6px; border-bottom: 1px solid var(--line-strong); }
+.m-pay td { padding: 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.m-pay td.num { color: var(--info); font-family: var(--font-num); white-space: nowrap; }
+.m-pay .ms { font-size: 22px; }
+.m-pay .ms.s7 { font-size: 26px; }
+.m-pay .ms.bar-sym { font-size: 12px; }
+.m-lines-map { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: var(--sp-2); }
+.m-lmap { display: grid; grid-template-columns: repeat(var(--lc, 5), 1fr); gap: 2px; padding: 4px; border-radius: 6px; background: var(--surf-2); }
+.m-lmap i { aspect-ratio: 1; border-radius: 2px; background: var(--surf-3); }
+.m-lmap i.on { background: var(--m-a, var(--accent)); }
+.m-info { --m-a: var(--accent); }
+
+/* ---------- Лобби: блок «Автоматы» ---------- */
+.games.machines .gcard .glyph { font-family: inherit; font-size: var(--fs-24); }
+
+/* ---------- Кнопки ставки на экране автомата — не меньше 44px ---------- */
+.machine-layout .chip { min-height: 44px; min-width: 44px; }
+
+@media (max-width: 600px) {
+  .mach { padding: var(--sp-3); }
+  .m-grid { gap: 4px; padding: 4px; }
+  .m-bar { font-size: var(--fs-12); }
+  .m-sign { font-size: var(--fs-20); }
+  .m-lines-map { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-cell.pop, .m-cell.drop .ms, .m-grid .nudge-up .ms, .m-grid .nudge-down .ms { animation: none; }
+}
