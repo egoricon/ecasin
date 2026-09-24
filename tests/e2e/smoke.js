@@ -241,6 +241,29 @@ require('fs').mkdirSync(OUT, { recursive: true });
   await shot(page, '09-share-card');
   await page.keyboard.press('Escape');
 
+  /* ---------- 6б. «Админ абьюз»: код admin → кнопка у логотипа → консоль ---------- */
+  await ev(page, () => { location.hash = '#/'; });
+  await page.waitForTimeout(300);
+  check(await ev(page, () => document.getElementById('adminBtn').hidden), 'кнопка админки видна без кода');
+  await page.click('[data-go="settings"]');
+  await page.click('[data-tab="codes"]');
+  await page.fill('#codeIn', 'admin');
+  await page.click('#codeOk');
+  await page.keyboard.press('Escape');
+  check(await ev(page, () => !document.getElementById('adminBtn').hidden), 'код admin не показал кнопку');
+  await page.click('#adminBtn');
+  await page.waitForSelector('#admIn');
+  const ab0 = await ev(page, () => EC.store.state.balance);
+  await page.click('[data-adm="cash1k"]');
+  await page.fill('#admIn', 'bal 777');
+  await page.keyboard.press('Enter');
+  check(await ev(page, () => EC.store.state.balance) === 777 && ab0 >= 0, 'команды консоли не работают');
+  await shot(page, 'modal-admin');
+  await page.fill('#admIn', 'admin off');
+  await page.keyboard.press('Enter');
+  check(await ev(page, () => document.getElementById('adminBtn').hidden && !EC.modal.isOpen()), 'admin off не спрятал кнопку');
+  await ev(page, () => { EC.store.state.balance = 50000; EC.store.commit('balance'); });
+
   /* ---------- 7. Отчислен из казино → назад ботать (через код разработчика в настройках) ---------- */
   await ev(page, () => { location.hash = '#/'; });
   await page.waitForTimeout(300);

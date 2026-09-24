@@ -409,6 +409,8 @@
       EC.bus.emit('win', { net, bet: 100, label, kind: 'win', cheat: true });
     };
     switch (c) {
+      case 'admin': // консоль «Админ абьюз» — кнопка 🛠 у логотипа (js/ui/admin.js)
+        EC.admin.set(true); EC.sound.play('bonus'); return ok('Админ абьюз включён — кнопка 🛠 у логотипа');
       case 'money': EC.econ.addMoney(10000); EC.store.commit('balance'); EC.sound.play('coin'); return ok('+10 000 E');
       case 'bonus': s.pendingBonus = true; EC.store.save(); EC.sound.play('bonus'); return ok('Следующий спин в слотах — бонус');
       case 'super': case 'win10': cheatWin(1000, 'Чит'); return ok('SUPER');

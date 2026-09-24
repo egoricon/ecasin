@@ -61,7 +61,10 @@
 <div class="boot" id="boot" aria-hidden="true"><div class="boot-in"><span class="boot-logo">E</span><span class="boot-bar"><i></i></span></div></div>
 
 <header class="topbar">
-  <button class="brand" data-go="home" aria-label="На главный экран"><span id="brandA">ЕГОР</span> <em id="brandB">БОТАЕТ</em></button>
+  <div class="top-brand">
+    <button class="brand" data-go="home" aria-label="На главный экран"><span id="brandA">ЕГОР</span> <em id="brandB">БОТАЕТ</em></button>
+    <button class="adm-btn" data-go="admin" id="adminBtn" aria-label="Админ абьюз" title="Админ абьюз" hidden><span aria-hidden="true">🛠</span><b>Админ</b></button>
+  </div>
   <div class="top-mid">
     <div class="seg" role="group" aria-label="Режим" id="modeSeg" hidden>
       <button data-go="casino" data-mode-btn="casino" aria-pressed="false">Депать</button>
@@ -126,6 +129,7 @@
 <script defer src="js/ui/home.js"></script>
 <script defer src="js/ui/donate.js"></script>
 <script defer src="js/ui/modals.js"></script>
+<script defer src="js/ui/admin.js"></script>
 <script defer src="js/ui/social.js"></script>
 <script defer src="js/ui/coach.js"></script>
 <script defer src="js/ui/scene.js"></script>

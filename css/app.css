@@ -166,6 +166,7 @@ body[data-fire="1"] .topbar::after {
   animation: fire 3s linear infinite;
 }
 @keyframes fire { to { background-position: -200% 0; } }
+.top-brand { grid-area: brand; display: flex; align-items: center; gap: var(--sp-3); min-width: 0; }
 .brand { grid-area: brand; display: flex; align-items: center; gap: 10px; border: 0; background: none; padding: 0; font: 400 var(--fs-24)/1 var(--font-display); letter-spacing: .02em; color: var(--tx); white-space: nowrap; }
 .brand em { font-style: normal; color: var(--accent); transition: color var(--t-slow); }
 body[data-neon="1"] .brand em { color: var(--accent-hover); text-shadow: var(--neon-text); }
@@ -376,6 +377,33 @@ body[data-neon="1"] .who-name { color: var(--accent-hover); text-shadow: 0 0 10p
 .code-st { font-size: var(--fs-14); color: var(--tx-2); min-height: 1.5em; margin-top: var(--sp-2); }
 .code-st .ok { color: var(--accent-hover); }
 .code-st .err { color: var(--loss); }
+
+/* ---------- «Админ абьюз»: кнопка у логотипа и консоль (js/ui/admin.js) ---------- */
+.adm-btn { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; min-width: 44px; justify-content: center; padding: 0 12px; border: 0; border-radius: var(--r-pill); background: color-mix(in srgb, var(--loss) 12%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--loss) 55%, transparent); color: var(--loss); font: 600 var(--fs-12) var(--font-ui); letter-spacing: .06em; text-transform: uppercase; transition: background var(--t-fast); }
+.adm-btn:hover { background: color-mix(in srgb, var(--loss) 22%, transparent); }
+.adm-btn span { font-size: 16px; line-height: 1; }
+.adm-cli { display: flex; align-items: center; gap: var(--sp-2); padding: 6px 6px 6px 14px; border-radius: var(--r-md); background: var(--surf-1); box-shadow: inset 0 0 0 1px var(--line-strong); font-family: var(--font-num); }
+.adm-cli > span { color: var(--loss); font-weight: 600; }
+.adm-cli .inp { flex: 1; min-width: 0; border: 0; background: transparent; box-shadow: none; font-family: var(--font-num); padding-left: 0; }
+.adm-log { min-height: 1.5em; margin: var(--sp-2) 0 var(--sp-4); font-size: var(--fs-12); display: flex; flex-direction: column; gap: 4px; }
+.adm-log .ok { color: var(--tx-2); }
+.adm-log .err { color: var(--loss); }
+.adm-log code { font-family: var(--font-num); color: var(--tx); margin-right: 4px; }
+.adm-sec h3 { font: 600 var(--fs-12) var(--font-ui); color: var(--tx-2); text-transform: uppercase; letter-spacing: .08em; margin: var(--sp-4) 0 var(--sp-2); }
+.adm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: var(--sp-2); }
+.adm-act { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; min-height: 56px; padding: 10px 12px; border: 0; border-radius: var(--r-sm); background: var(--surf-2); box-shadow: inset 0 0 0 1px var(--line); color: var(--tx); text-align: left; transition: box-shadow var(--t-fast), background var(--t-fast); }
+button.adm-act:hover { box-shadow: inset 0 0 0 1px var(--accent); }
+.adm-act b { font: 600 var(--fs-14) var(--font-ui); }
+.adm-act code, .adm-foot code { font: 500 11px var(--font-num); color: var(--tx-2); }
+.adm-argrow { display: flex; gap: 6px; width: 100%; }
+.adm-argrow .inp { flex: 1; min-width: 0; min-height: 34px; padding: 4px 10px; font-family: var(--font-num); }
+.adm-foot { display: flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-6); padding-top: var(--sp-4); border-top: 1px solid var(--line); }
+@media (max-width: 600px) {
+  .adm-btn b { display: none; }
+  .adm-btn { padding: 0; width: 44px; }
+  .top-brand { gap: var(--sp-2); }
+  .adm-grid { grid-template-columns: 1fr 1fr; }
+}
 .rules h3 { font: 600 var(--fs-16) var(--font-ui); margin: var(--sp-4) 0 4px; }
 .rules p, .rules li { color: var(--tx-2); font-size: var(--fs-14); }
 .rules ul { margin: 0; padding-left: 18px; }
