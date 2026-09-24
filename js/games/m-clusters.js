@@ -66,7 +66,8 @@
         EC.sound.play('reel');
         await UI.wait(380);
       }
-      if (s.scatterM || s.scatters >= 3) KIT.mark(grid, EC.machines.cellsOf(s.final, M.scatter));
+      // Глитчи подсвечиваем, только когда они что-то дают: в основной игре от 4, во фриспинах от 3
+      if (s.scatterM || s.scatters >= (badges ? M.fsRetrigger : M.fsTrigger)) KIT.mark(grid, EC.machines.cellsOf(s.final, M.scatter));
       if (badges && s.win > 0 && s.multiplier > 1) {
         ctx.bar(html`${prefix}Множители: ${s.multiplier} × ${U.fmt(Math.round(s.win * bet))} E = <span class="num">${U.fmt(Math.round(s.win * s.multiplier * bet))} E</span>`);
         EC.sound.play('win');
@@ -87,10 +88,12 @@
         last = b.final;
         const grid = ctx.$('#mGrid');
         if (!grid) return;
-        ctx.bar(b.m > 0 ? html`Выигрыш <span class="num">${U.fmt(Math.round(b.m * r.bet))} E</span>${b.steps.length > 1 ? html` · каскадов: ${b.steps.length}` : ''}` : 'Мимо');
+        const near = !r.out.bonus && b.scatters === M.fsTrigger - 1 ? html` · ${b.scatters} из ${M.fsTrigger} ${KIT.sym(M, M.scatter)} — почти фриспины` : '';
+        ctx.bar(html`${b.m > 0 ? html`Выигрыш <span class="num">${U.fmt(Math.round(b.m * r.bet))} E</span>${b.steps.length > 1 ? html` · каскадов: ${b.steps.length}` : ''}` : 'Мимо'}${near}`);
         if (!r.out.bonus) return;
         const bo = r.out.bonus;
-        await UI.wait(500);
+        await UI.wait(600);
+        KIT.bonus(ctx, 'clusters', 'Фриспины');
         ctx.bar(html`<b>${b.scatters} × ${KIT.sym(M, M.scatter)}</b> — ${M.freeSpins} фриспинов с множителями!`);
         EC.sound.play('bonus');
         await UI.wait(1100);
@@ -107,12 +110,15 @@
             ctx.bar(html`<b>Ещё +${M.retrigger} фриспинов!</b>`);
             EC.sound.play('bonus');
             await UI.wait(900);
-          } else await UI.wait(350);
+          } else await UI.wait(750); // поле постоит, прежде чем крутить следующий фриспин
           last = s.final;
         }
         badges = null;
         redrawBadges(ctx.$('#mGrid'));
         ctx.bar(html`Фриспины окончены · бонус <span class="num">${U.fmt(Math.round(bo.m * r.bet))} E</span>`);
+        EC.sound.play('win');
+        await UI.wait(1500);
+        KIT.bonus(ctx, null);
       },
     });
   }

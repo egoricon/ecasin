@@ -65,17 +65,20 @@
       if (grid.isConnected) KIT.clear(grid);
     }
 
-    // Рулетка множителя в строке статуса.
+    // Рулетка множителя в строке статуса: крутится ~2 с и замедляется перед остановкой.
     async function multRoll(ctx, mult) {
       const vals = M.multValues;
-      for (let i = 0; i < 8; i++) {
-        ctx.bar(html`Множитель <span class="m-mult">×${vals[i % vals.length]}</span>`);
-        if (i % 2 === 0) EC.sound.play('tick');
-        await UI.wait(65);
+      const delays = [50, 50, 55, 55, 60, 65, 70, 80, 90, 100, 115, 130, 150, 175, 205, 240, 280];
+      let k = U.randInt(vals.length);
+      for (let i = 0; i < delays.length; i++) {
+        k = (k + 1 + U.randInt(vals.length - 1)) % vals.length; // каждый раз другое значение
+        ctx.bar(html`Множитель <span class="m-mult">×${vals[k]}</span>`);
+        EC.sound.play('tick');
+        await UI.wait(delays[i]);
       }
-      ctx.bar(html`Множитель <span class="m-mult">×${mult}</span>`);
-      if (mult > 1) EC.sound.play('bonus');
-      await UI.wait(mult > 1 ? 650 : 250);
+      ctx.bar(html`Множитель <span class="m-mult on">×${mult}</span>`);
+      EC.sound.play(mult > 1 ? 'bonus' : 'reel');
+      await UI.wait(mult > 1 ? 1000 : 600);
     }
 
     const ctx = KIT.mount(root, ID, {

@@ -109,7 +109,6 @@
   --door-tx:     var(--n-100);
   --door-glow:   var(--pink-500);
   --topbar-h:    64px;
-  --ticker-h:    34px;
 
   background: var(--bg);
   color: var(--tx);

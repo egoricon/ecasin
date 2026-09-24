@@ -241,6 +241,18 @@ require('fs').mkdirSync(OUT, { recursive: true });
   await shot(page, '09-share-card');
   await page.keyboard.press('Escape');
 
+  /* ---------- 6а. Большой выигрыш идёт по нарастающей, строки LIVE нет ---------- */
+  check(!(await page.$('.ticker')), 'строка LIVE всё ещё на странице');
+  await ev(page, () => { const st = document.createElement('div'); EC.modals.code('ultra', st); });
+  await page.waitForTimeout(300);
+  const t1 = await ev(page, () => document.querySelector('.win-ov .win-tier').textContent);
+  await page.waitForTimeout(3500);
+  const t2 = await ev(page, () => ({ tier: document.querySelector('.win-ov .win-tier').textContent, rays: !!document.querySelector('.win-ov .win-rays') }));
+  check(t1 === 'SUPER WIN' && t2.tier === 'ULTRA WIN' && t2.rays, 'ULTRA WIN не нарастает: ' + t1 + ' → ' + JSON.stringify(t2));
+  await shot(page, '09b-ultra-win');
+  await page.click('.win-ov');
+  await page.waitForTimeout(300);
+
   /* ---------- 6б. «Админ абьюз»: код admin → кнопка у логотипа → консоль ---------- */
   await ev(page, () => { location.hash = '#/'; });
   await page.waitForTimeout(300);

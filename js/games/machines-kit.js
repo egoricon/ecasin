@@ -6,9 +6,10 @@
   const KIT = {};
 
   /* ---------- Символы и сетка ---------- */
+  // tag — подпись на клетке («СКАТТЕР», «СБОРЩИК»): отдельный элемент, видна только на поле.
   KIT.sym = (M, sym, extra = '') => {
     const d = M.symbols[sym];
-    return html`<span class="ms ${d.cls || ''}" aria-label="${d.n}">${d.i}</span>${U.raw(extra)}`;
+    return html`<span class="ms ${d.cls || ''}" aria-label="${d.n}">${d.i}</span>${d.tag ? html`<span class="m-stag" aria-hidden="true">${d.tag}</span>` : ''}${U.raw(extra)}`;
   };
   KIT.gridHTML = (M, grid, id = 'mGrid') => html`<div class="m-grid" id="${id}" style="--cols:${grid.length};--rows:${grid[0].length}">
     ${grid[0].map((_, r) => grid.map((col, c) => html`<div class="m-cell" data-c="${c}" data-r="${r}">${KIT.sym(M, col[r])}</div>`))}
@@ -75,6 +76,32 @@
     }
   };
 
+  /* ---------- Фон бонусной игры ----------
+     kind — тема: knowledge | clusters | fishing | hold; null — выключить. В автомате за сеткой живой слой
+     (сцена + частицы), на странице — подсветка под тему (body[data-mbonus]). label — плашка на вывеске. */
+  const BONUS_BG = {
+    knowledge: { n: 16, bits: ['∑', 'π', '∫', '√', '∞', 'λ', 'Δ', 'Ω', 'φ', '∂', '≈', '∇'] },
+    clusters: { n: 14, bits: ['404', '0', '1', '0', '1', '▚', '▞'] },
+    fishing: { n: 18, bits: [''] }, // пузыри рисует CSS
+    hold: { n: 14, bits: [''] },
+  };
+  KIT.bonus = (ctx, kind, label) => {
+    const mach = ctx.$('.mach');
+    if (!mach) return;
+    mach.querySelectorAll('.m-bg, .m-btag').forEach((x) => x.remove());
+    mach.classList.toggle('bonus', !!kind);
+    if (kind) { mach.dataset.bonus = kind; document.body.dataset.mbonus = kind; } else { delete mach.dataset.bonus; delete document.body.dataset.mbonus; }
+    if (!kind) return;
+    const cfg = BONUS_BG[kind];
+    const bits = Array.from({ length: cfg.n }, () => {
+      const st = `left:${(U.rand() * 96).toFixed(1)}%;--d:${(7 + U.rand() * 9).toFixed(1)}s;--dl:-${(U.rand() * 12).toFixed(1)}s;--s:${(0.55 + U.rand() * 0.9).toFixed(2)}`;
+      return html`<i style="${st}">${U.pick(cfg.bits)}</i>`;
+    });
+    mach.insertAdjacentHTML('afterbegin', String(html`<div class="m-bg" aria-hidden="true"><div class="m-bg-scene"></div>${bits}</div>`));
+    const sign = mach.querySelector('.m-sign');
+    if (sign && label) sign.insertAdjacentHTML('beforeend', String(html` <span class="m-btag">${label}</span>`));
+  };
+
   /* ---------- Окно «Инфо»: правила и таблица выплат ---------- */
   KIT.info = (id, body) => {
     const M = C.MACHINES[id];
@@ -113,6 +140,7 @@
     rb.textContent = 'Инфо';
     ctx.$('#betIn').min = M.minBet;
     ctx.bar = (h) => UI.set(ctx.$('#mBar'), h);
+    ctx.cleanup.push(() => { delete document.body.dataset.mbonus; }); // ушли посреди бонуса — фон страницы гасим
 
     ctx.onAct = (act, b) => {
       if (act === 'info') KIT.info(id, opts.info());

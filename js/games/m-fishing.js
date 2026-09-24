@@ -60,16 +60,17 @@
         const el = KIT.cell(grid, c, r);
         if (v) { el.classList.add('hold'); el.innerHTML = String(KIT.sym(M, M.fish, valTag(v))); } else el.innerHTML = '';
       }));
+      KIT.bonus(ctx, 'hold', 'Hold & Spin');
       ctx.bar(html`<b>Hold &amp; Spin!</b> Респины: <span class="num">${M.respins}</span>`);
       EC.sound.play('bonus');
-      await UI.wait(900);
+      await UI.wait(1100);
       for (const round of hold.rounds) {
         const empty = [];
         held.forEach((col, c) => col.forEach((v, r) => { if (!v) empty.push([c, r]); }));
-        for (let f = 0; f < 6; f++) { // мелькание пустых клеток
+        for (let f = 0; f < 11; f++) { // мелькание пустых клеток
           empty.forEach(([c, r]) => { KIT.cell(grid, c, r).innerHTML = U.rand() < 0.3 ? String(KIT.sym(M, M.fish)) : ''; KIT.cell(grid, c, r).classList.add('spin'); });
           if (f % 2 === 0) EC.sound.play('tick');
-          await UI.wait(70);
+          await UI.wait(75);
           if (!grid.isConnected) return;
         }
         empty.forEach(([c, r]) => { const el = KIT.cell(grid, c, r); el.classList.remove('spin'); el.innerHTML = ''; });
@@ -82,11 +83,12 @@
         const sum = held.reduce((t, col) => t + col.reduce((a, b) => a + b, 0), 0);
         ctx.bar(html`${round.landed.length ? html`<b>+${round.landed.length} 🐟</b> респины снова ${M.respins}` : 'Пусто'} · осталось <span class="num">${round.respins}</span> · улов <span class="num">${U.fmt(Math.round(sum * bet))} E</span>`);
         EC.sound.play(round.landed.length ? 'coin' : 'reel');
-        await UI.wait(round.landed.length ? 750 : 450);
+        await UI.wait(round.landed.length ? 950 : 700);
       }
       ctx.bar(html`${hold.full ? html`<b>Полный садок! +×${M.fullBonus}</b> · ` : ''}Hold &amp; Spin: <span class="num">${U.fmt(Math.round(hold.m * bet))} E</span>`);
       EC.sound.play('win');
-      await UI.wait(1200);
+      await UI.wait(1600);
+      KIT.bonus(ctx, null);
     }
 
     const ctx = KIT.mount(root, ID, {
@@ -105,7 +107,8 @@
         if (r.out.hold) { await UI.wait(400); await holdSpin(ctx, b, r.out.hold); }
         if (r.out.bonus) {
           const bo = r.out.bonus;
-          await UI.wait(400);
+          await UI.wait(600);
+          KIT.bonus(ctx, 'fishing', 'Фриспины');
           ctx.bar(html`<b>${b.scatters} × ${KIT.sym(M, M.scatter)}</b> — ${M.freeSpins} фриспинов, приходит дед!`);
           EC.sound.play('bonus');
           await UI.wait(1100);
@@ -118,8 +121,12 @@
             sum += s.m;
             if (s.retrigger) { total += M.retrigger; ctx.bar(html`<b>Ещё +${M.retrigger} фриспинов!</b>`); EC.sound.play('bonus'); await UI.wait(900); }
             last = s;
+            await UI.wait(650); // барабаны постоят, прежде чем крутить следующий фриспин
           }
           ctx.bar(html`Фриспины окончены · бонус <span class="num">${U.fmt(Math.round(bo.m * r.bet))} E</span>`);
+          EC.sound.play('win');
+          await UI.wait(1500);
+          KIT.bonus(ctx, null);
         }
       },
     });

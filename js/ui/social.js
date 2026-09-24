@@ -1,24 +1,10 @@
-/* Фейковая социалка: лента выигрышей и лайв-чат. Всё генерируется на клиенте. */
+/* Фейковая социалка: лайв-чат. Всё генерируется на клиенте. */
 (function (EC) {
   'use strict';
   const U = EC.util, UI = EC.ui, C = EC.config, html = U.html;
   const S = () => EC.store.state;
 
   const badge = (p) => html`<span class="bdg bdg-${p.c}">${p.t}</span>`;
-  const GAMES_SHORT = ['Crash', 'Слоты', 'Рулетка', 'Блэкджек', 'Кости', 'Баккара', 'Холдем', 'Видеопокер'];
-
-  function tickerItem() {
-    const p = U.rand() < 0.5 ? U.pick(C.PLAYERS) : null;
-    const name = p ? p.n : U.pick(C.EXTRA_NAMES);
-    const w = Math.floor(50 + U.rand() * U.rand() * 25000);
-    return html`<span>${p ? html`${badge(p)} ` : ''}<b>${name}</b> выиграл <span class="num">${U.fmt(w)} E</span> · ${U.pick(GAMES_SHORT)}</span>`;
-  }
-  function fillTicker() {
-    const t = UI.$('#tickerTrack');
-    if (!t) return;
-    const items = Array.from({ length: 12 }, tickerItem);
-    UI.set(t, html`<span class="tcopy">${items}</span><span class="tcopy">${items}</span>`); // дубль для бесшовной прокрутки
-  }
 
   function chatLine() {
     const box = UI.$('#chatBody');
@@ -54,13 +40,11 @@
   }
 
   EC.social = {
-    // Лента и чат живут только в казино.
+    // Чат живёт только в казино.
     setVisible(v) {
-      UI.$('#ticker').hidden = !v;
       UI.$('#chat').hidden = !v;
     },
     start() {
-      fillTicker();
       for (let i = 0; i < 4; i++) chatLine();
       // На телефоне чат по умолчанию свёрнут
       const narrow = globalThis.matchMedia && matchMedia('(max-width: 600px)').matches;
@@ -74,7 +58,6 @@
       // Клик по «горилле» в чате — пасхалка «Друг Полины»
       UI.$('#chatBody').onclick = (e) => { if (e.target.closest('.gorilla')) EC.fx.gorilla(); };
       setInterval(chatLine, 4500);
-      setInterval(() => { if (U.rand() < 0.5) fillTicker(); }, 30000);
       setInterval(EC.header.tickOnline, 4000);
     },
   };

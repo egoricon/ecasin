@@ -38,6 +38,18 @@
 .m-x { position: absolute; top: 3px; right: 3px; font: 600 clamp(9px, 2vw, 12px)/1 var(--font-num); color: var(--m-a); background: color-mix(in srgb, var(--n-950) 75%, transparent); border-radius: 4px; padding: 2px 4px; }
 .m-cell.xcell { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--m-a) 70%, transparent); }
 
+/* ---------- Скаттеры и особые символы: рамка, свечение и подпись на клетке ---------- */
+.m-stag { display: none; }
+.m-cell .m-stag { display: block; position: absolute; left: 3px; right: 3px; bottom: 3px; text-align: center; font: 700 clamp(7px, 1.6vw, 10px)/1.3 var(--font-ui); letter-spacing: .06em; color: var(--n-950); background: var(--m-b); border-radius: 4px; pointer-events: none; }
+.m-cell .ms.col ~ .m-stag { background: var(--m-a); }
+.m-cell:has(> .ms.sc) { background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--m-b) 30%, var(--surf-2)), var(--surf-2) 72%); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--m-b) 85%, transparent), 0 0 14px color-mix(in srgb, var(--m-b) 35%, transparent); }
+.m-cell .ms.sc { animation: mScatter 1.6s ease-in-out infinite; }
+@keyframes mScatter { 50% { filter: drop-shadow(0 0 10px var(--m-b)) brightness(1.25); } }
+.m-cell.win:has(> .ms.sc) { background: color-mix(in srgb, var(--win) 14%, var(--surf-2)); box-shadow: inset 0 0 0 2px var(--win); }
+.m-cell.spin .m-stag { opacity: 0; }
+.m-cell.spin .ms.sc { animation: none; }
+.m-cell.drop .ms.sc { animation: mDrop .3s var(--ease-snap) both; }
+
 /* ---------- Символы, нарисованные CSS (Мини-777, скаттеры) ---------- */
 .ms.s7 { font: 400 clamp(28px, 7vw, 56px)/1 var(--font-display); }
 .ms.s7.c { color: var(--cyan-500); text-shadow: 0 0 12px color-mix(in srgb, var(--cyan-500) 60%, transparent); }
@@ -56,7 +68,73 @@
 .m-grid .nudge-down .ms { animation: mNudgeDown .35s var(--ease-snap); }
 @keyframes mNudgeUp { from { transform: translateY(100%); } }
 @keyframes mNudgeDown { from { transform: translateY(-100%); } }
+.m-mult.on { animation: mMultOn .5s var(--ease-snap); box-shadow: inset 0 0 0 2px var(--m-a), 0 0 22px color-mix(in srgb, var(--m-a) 60%, transparent); }
+@keyframes mMultOn { 40% { transform: scale(1.35); } }
 .m-mult { display: inline-grid; place-items: center; min-width: 56px; height: 44px; padding: 0 10px; border-radius: var(--r-sm); font: 500 var(--fs-20) var(--font-num); color: var(--m-a); box-shadow: inset 0 0 0 2px var(--m-a); }
+
+/* ---------- Бонусная игра: тематический фон автомата и страницы (KIT.bonus) ---------- */
+.mach > :not(.m-bg) { position: relative; z-index: 1; }
+.mach.bonus { animation: mBonusGlow 2.4s ease-in-out infinite alternate; }
+@keyframes mBonusGlow {
+  from { box-shadow: inset 0 0 0 2px var(--m-a), 0 0 40px color-mix(in srgb, var(--m-a) 28%, transparent); }
+  to { box-shadow: inset 0 0 0 2px var(--m-b), 0 0 64px color-mix(in srgb, var(--m-b) 34%, transparent); }
+}
+.mach.bonus .m-grid { background: color-mix(in srgb, var(--surf-1) 55%, transparent); }
+.m-bg { position: absolute; inset: 0; z-index: 0; border-radius: inherit; overflow: hidden; pointer-events: none; animation: mFadeIn .8s ease-out both; }
+@keyframes mFadeIn { from { opacity: 0; } }
+.m-bg-scene { position: absolute; inset: 0; }
+.m-bg i { position: absolute; bottom: -12%; font-style: normal; line-height: 1; font-size: calc(var(--s) * 30px); color: var(--m-a); opacity: .3; animation: mRise var(--d) linear var(--dl) infinite; }
+.m-bg i:nth-of-type(2n) { color: var(--m-b); }
+@keyframes mRise { from { bottom: -12%; } to { bottom: 108%; } }
+@keyframes mRiseTurn { from { bottom: -12%; rotate: 0deg; } to { bottom: 108%; rotate: 200deg; } }
+@keyframes mFall { from { bottom: 108%; } to { bottom: -12%; } }
+@keyframes mSway { 50% { translate: 14px 0; } }
+@keyframes mSpin { to { rotate: 360deg; } }
+.m-btag { display: inline-block; vertical-align: middle; margin-left: 6px; padding: 4px 10px; border-radius: var(--r-pill); font: 700 var(--fs-12)/1.2 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; text-shadow: none; color: var(--n-950); background: var(--m-b); animation: mBtag 1.2s ease-in-out infinite alternate; }
+@keyframes mBtag { to { background: var(--m-a); } }
+
+/* Книга Знаний — ночная библиотека: кольцо рун вращается, формулы всплывают */
+.mach[data-bonus="knowledge"] .m-bg { background: radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--cyan-500) 18%, transparent), transparent 60%), radial-gradient(100% 70% at 50% 110%, color-mix(in srgb, var(--pink-500) 18%, transparent), transparent 60%); }
+.mach[data-bonus="knowledge"] .m-bg-scene { inset: auto; left: 50%; top: 55%; width: 130%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
+  background: repeating-conic-gradient(color-mix(in srgb, var(--cyan-500) 45%, transparent) 0 2deg, transparent 2deg 12deg);
+  mask: radial-gradient(closest-side, transparent 60%, var(--n-950) 61% 64%, transparent 65% 76%, var(--n-950) 77% 78%, transparent 79%);
+  opacity: .55; animation: mSpin 36s linear infinite; }
+.mach[data-bonus="knowledge"] .m-bg i { font-family: var(--font-display); animation-name: mRiseTurn; }
+
+/* Кибер-Кластеры — синтвейв: бегущий пол-сетка, сканлайны с глитчем, падающие 404 */
+.mach[data-bonus="clusters"] .m-bg { background: linear-gradient(180deg, color-mix(in srgb, var(--pink-500) 18%, transparent), transparent 45%, color-mix(in srgb, var(--cyan-500) 12%, transparent)); }
+.mach[data-bonus="clusters"] .m-bg-scene { top: auto; left: -60%; right: -60%; height: 60%;
+  background-image: linear-gradient(color-mix(in srgb, var(--pink-500) 55%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--cyan-500) 50%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px; transform: perspective(240px) rotateX(58deg); transform-origin: 50% 100%;
+  mask: linear-gradient(transparent, var(--n-950) 55%); opacity: .75; animation: mGridRun 1.3s linear infinite; }
+@keyframes mGridRun { to { background-position: 0 44px, 0 0; } }
+.mach[data-bonus="clusters"] .m-bg::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, color-mix(in srgb, var(--n-950) 40%, transparent) 0 1px, transparent 1px 4px); opacity: .5; animation: mGlitch 3.4s steps(1) infinite; }
+@keyframes mGlitch { 91% { translate: 0 0; opacity: .5; } 92% { translate: 5px 0; opacity: .9; } 94% { translate: -7px 0; } 96% { translate: 0 0; opacity: .5; } }
+.mach[data-bonus="clusters"] .m-bg i { font-family: var(--font-num); font-weight: 600; font-size: calc(var(--s) * 20px); opacity: .25; animation-name: mFall; }
+
+/* Рыбалка — река: волны, блики, пузыри */
+.mach[data-bonus="fishing"] .m-bg, .mach[data-bonus="hold"] .m-bg { background: linear-gradient(180deg, color-mix(in srgb, var(--cyan-500) 22%, transparent), color-mix(in srgb, var(--cyan-950) 85%, transparent)); }
+.mach[data-bonus="fishing"] .m-bg-scene { background: radial-gradient(40% 30% at 20% 30%, color-mix(in srgb, var(--cyan-500) 22%, transparent), transparent 70%), radial-gradient(35% 25% at 80% 60%, color-mix(in srgb, var(--lime-500) 14%, transparent), transparent 70%); background-size: 200% 200%; animation: mCaustic 9s ease-in-out infinite alternate; }
+@keyframes mCaustic { to { background-position: 100% 60%, 0% 40%; } }
+.mach[data-bonus="fishing"] .m-bg::before, .mach[data-bonus="hold"] .m-bg::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 30px;
+  background: radial-gradient(22px 12px at 22px 0, transparent 70%, color-mix(in srgb, var(--cyan-500) 55%, transparent) 72%, transparent 88%) 0 0 / 44px 30px repeat-x;
+  animation: mWave 2.6s linear infinite; }
+@keyframes mWave { to { background-position: 44px 0; } }
+.mach[data-bonus="fishing"] .m-bg i, .mach[data-bonus="hold"] .m-bg i { width: calc(var(--s) * 16px); height: calc(var(--s) * 16px); border-radius: 50%; opacity: .5;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--cyan-500) 70%, transparent); background: radial-gradient(circle at 32% 30%, color-mix(in srgb, var(--n-0) 45%, transparent) 0 18%, transparent 24%);
+  animation: mRise var(--d) linear var(--dl) infinite, mSway 2.4s ease-in-out infinite; }
+/* Hold & Spin — сеть над водой */
+.mach[data-bonus="hold"] .m-bg-scene { background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--lime-500) 30%, transparent) 0 1.5px, transparent 1.5px 26px), repeating-linear-gradient(-45deg, color-mix(in srgb, var(--lime-500) 30%, transparent) 0 1.5px, transparent 1.5px 26px);
+  mask: radial-gradient(ellipse at 50% 55%, var(--n-950) 25%, transparent 80%); animation: mNet 4s ease-in-out infinite alternate; }
+@keyframes mNet { to { background-position: 0 13px, 13px 0; opacity: .55; } }
+
+/* Подсветка страницы под тему бонуса */
+body[data-mbonus]::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; animation: mFadeIn 1s ease-out both, mPagePulse 5s ease-in-out 1s infinite alternate; }
+@keyframes mPagePulse { to { opacity: .65; } }
+body[data-mbonus="knowledge"]::before { background: radial-gradient(900px 620px at 12% 8%, color-mix(in srgb, var(--cyan-500) 20%, transparent), transparent 70%), radial-gradient(900px 620px at 88% 92%, color-mix(in srgb, var(--pink-500) 18%, transparent), transparent 70%); }
+body[data-mbonus="clusters"]::before { background: radial-gradient(1100px 520px at 50% 0%, color-mix(in srgb, var(--pink-500) 24%, transparent), transparent 70%), linear-gradient(color-mix(in srgb, var(--cyan-500) 8%, transparent) 1px, transparent 1px) 0 0 / 56px 56px, linear-gradient(90deg, color-mix(in srgb, var(--cyan-500) 8%, transparent) 1px, transparent 1px) 0 0 / 56px 56px; }
+body[data-mbonus="fishing"]::before, body[data-mbonus="hold"]::before { background: linear-gradient(180deg, transparent 15%, color-mix(in srgb, var(--cyan-500) 14%, transparent) 65%, color-mix(in srgb, var(--cyan-500) 24%, transparent)), radial-gradient(900px 420px at 50% 100%, color-mix(in srgb, var(--lime-500) 12%, transparent), transparent 70%); }
+body[data-mbonus="hold"]::before { background: radial-gradient(1000px 520px at 50% 0%, color-mix(in srgb, var(--lime-500) 16%, transparent), transparent 70%), linear-gradient(180deg, transparent 15%, color-mix(in srgb, var(--cyan-500) 16%, transparent) 70%, color-mix(in srgb, var(--cyan-500) 24%, transparent)); }
 
 /* ---------- Окно «Инфо» ---------- */
 .m-pay { width: 100%; border-collapse: collapse; font-size: var(--fs-14); margin: var(--sp-2) 0; }
@@ -86,5 +164,9 @@
   .m-lines-map { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .m-cell.pop, .m-cell.drop .ms, .m-grid .nudge-up .ms, .m-grid .nudge-down .ms { animation: none; }
+  .m-cell.pop, .m-cell.drop .ms, .m-grid .nudge-up .ms, .m-grid .nudge-down .ms, .m-cell .ms.sc,
+  .mach.bonus, .m-bg, .m-bg *, .m-bg::before, .m-bg::after, .m-btag, body[data-mbonus]::before { animation: none; }
+  .m-bg i { display: none; }
 }
+body[data-anim="off"] .mach.bonus, body[data-anim="off"] .m-bg, body[data-anim="off"] .m-bg *, body[data-anim="off"] .m-bg::before, body[data-anim="off"] .m-bg::after, body[data-anim="off"] .m-btag, body[data-anim="off"][data-mbonus]::before { animation: none; }
+body[data-anim="off"] .m-bg i { display: none; }

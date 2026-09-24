@@ -176,14 +176,14 @@
         title: 'Бонус-игра',
         locked: true,
         wide: true,
-        body: html`
+        body: html`<div class="bonus-scene" data-v="${S().slotVariant}"><div class="bs-bg" aria-hidden="true"></div>
           <div class="bonus-stats">
             <div class="stat"><span class="label">Спин</span><b id="bnSpin">0 / ${N}</b></div>
             <div class="stat"><span class="label">Последний</span><b id="bnLast">0 E</b></div>
             <div class="stat"><span class="label">Всего</span><b id="bnTotal">0 E</b></div>
           </div>
           <div class="bonus-grid" id="bnGrid"></div>
-          <div class="brow" style="margin-top:16px;justify-content:center"><button class="btn b-sec" id="bnFast">Ускорить</button></div>`,
+          <div class="brow" style="margin-top:16px;justify-content:center"><button class="btn b-sec" id="bnFast">Ускорить</button></div></div>`,
       });
       const grid = UI.$('#bnGrid', body);
       const draw = (g, wins = []) => {

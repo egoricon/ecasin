@@ -82,7 +82,8 @@
         ctx.bar(b.m > 0 ? html`Выигрыш <span class="num">${bx} E</span>` : 'Мимо');
         if (!r.out.bonus) return;
         const bo = r.out.bonus;
-        await UI.wait(400);
+        await UI.wait(600);
+        KIT.bonus(ctx, 'knowledge', 'Фриспины');
         ctx.bar(html`<b>${b.scatters} книги!</b> ${M.freeSpins} фриспинов`);
         EC.sound.play('bonus');
         await UI.wait(900);
@@ -102,8 +103,12 @@
             await UI.wait(900);
           }
           last = s.grid;
+          await UI.wait(650); // барабаны постоят, прежде чем крутить следующий фриспин
         }
         ctx.bar(html`Фриспины окончены · бонус <span class="num">${U.fmt(Math.round(bo.m * r.bet))} E</span>`);
+        EC.sound.play('win');
+        await UI.wait(1500);
+        KIT.bonus(ctx, null);
       },
     });
   }
