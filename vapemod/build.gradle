@@ -83,3 +83,9 @@ tasks.named('processResources', ProcessResources) {
         expand resourceProps
     }
 }
+
+// CI helper: prints the compile classpath (used by .ci/research.sh)
+tasks.register('printCompileClasspath') {
+    def cp = sourceSets.main.compileClasspath
+    doLast { cp.each { println it } }
+}
