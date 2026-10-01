@@ -60,7 +60,8 @@ public final class VapeLogic {
         // --- flavour effect ---
         int flavorTicks = Math.round(VapeConfig.FLAVOR_EFFECT_TICKS.get() * (0.4F + 0.6F * strength));
         if (flavorTicks > 0) {
-            player.addEffect(new MobEffectInstance(liquid.flavor().effect(), flavorTicks, 0, false, true, true));
+            // no swirl particles (they fly right in front of the camera every puff), icon only
+            player.addEffect(new MobEffectInstance(liquid.flavor().effect(), flavorTicks, 0, false, false, true));
         }
 
         // --- over the limit: cough ---
@@ -112,7 +113,7 @@ public final class VapeLogic {
                     MobEffectInstance current = player.getEffect(ModEffects.holder(ModEffects.CRAVING));
                     if (current == null || current.endsWithin(TICK_STEP * 2)) {
                         player.addEffect(new MobEffectInstance(ModEffects.holder(ModEffects.CRAVING),
-                                VapeConfig.CRAVING_EFFECT_TICKS.get(), 0, false, true, true));
+                                VapeConfig.CRAVING_EFFECT_TICKS.get(), 0, false, false, true));
                     }
                 }
             }

@@ -60,6 +60,10 @@ if [ $joined = 1 ]; then
   shot exhale
   sleep 1.2
   shot after
+  # hold longer than the max puff (3 s): the player must exhale automatically
+  xdotool mousedown 3; sleep 3.4
+  shot auto_exhale
+  xdotool mouseup 3; sleep 1.5
   xdotool key F5; sleep 0.5
   xdotool mousedown 3; sleep 2.0; xdotool mouseup 3; sleep 0.3
   shot third_person
