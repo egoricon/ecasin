@@ -41,6 +41,11 @@ public class LiquidItem extends Item {
             }
             return InteractionResult.FAIL;
         }
+        // From the off hand only an empty vape is refilled: otherwise holding right click on a
+        // vape (e.g. during its cooldown) would silently swap the loaded liquid.
+        if (hand == InteractionHand.OFF_HAND && VapeItem.liquid(vape) != null) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide()) {
             VapeItem.filled(vape, flavor);
             player.sendOverlayMessage(Component.translatable("message.vapemod.refilled", flavor.displayName()));

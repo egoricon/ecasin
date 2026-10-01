@@ -14,7 +14,7 @@
   "tooltip.vapemod.vape.empty": "Пусто, заправьте жидкостью",
   "tooltip.vapemod.vape.howto": "Зажмите ПКМ, чтобы затянуться, отпустите, чтобы выдохнуть",
   "tooltip.vapemod.liquid.effect": "Эффект: %s",
-  "tooltip.vapemod.liquid.howto": "Используйте, держа вейп в другой руке, или нажмите ПКМ жидкостью по вейпу в инвентаре",
+  "tooltip.vapemod.liquid.howto": "Возьмите жидкость в основную руку, а вейп во вторую, и нажмите ПКМ. Или нажмите ПКМ жидкостью по вейпу в инвентаре",
   "message.vapemod.empty": "Вейп пуст, заправьте его жидкостью",
   "message.vapemod.need_vape": "Чтобы заправить, держите вейп в другой руке",
   "message.vapemod.refilled": "Вейп заправлен: %s",

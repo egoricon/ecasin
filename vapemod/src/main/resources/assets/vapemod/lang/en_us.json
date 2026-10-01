@@ -14,7 +14,7 @@
   "tooltip.vapemod.vape.empty": "Empty, refill it with liquid",
   "tooltip.vapemod.vape.howto": "Hold right click to inhale, release to exhale",
   "tooltip.vapemod.liquid.effect": "Effect: %s",
-  "tooltip.vapemod.liquid.howto": "Use it with a vape in the other hand, or right-click it onto a vape in the inventory",
+  "tooltip.vapemod.liquid.howto": "Hold it in the main hand and the vape in the off hand, then right click. Or right-click it onto a vape in the inventory",
   "message.vapemod.empty": "The vape is empty, refill it with liquid",
   "message.vapemod.need_vape": "Hold a vape in the other hand to refill it",
   "message.vapemod.refilled": "Vape refilled: %s",
