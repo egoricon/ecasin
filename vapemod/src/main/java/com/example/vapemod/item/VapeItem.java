@@ -57,6 +57,10 @@ public class VapeItem extends Item {
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (liquid(stack) == null) {
+            InteractionHand otherHand = hand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+            if (player.getItemInHand(otherHand).getItem() instanceof LiquidItem) {
+                return InteractionResult.PASS; // let the liquid in the other hand refill this vape
+            }
             if (!level.isClientSide()) {
                 player.sendOverlayMessage(Component.translatable("message.vapemod.empty").withStyle(ChatFormatting.GRAY));
             }

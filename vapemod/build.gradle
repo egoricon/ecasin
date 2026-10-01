@@ -31,7 +31,12 @@ minecraft {
             systemProperty 'forge.enabledGameTestNamespaces', mod_id
         }
 
-        register('client')
+        register('client') {
+            // CI client smoke test: ./gradlew runClient -PquickPlay=<save name>
+            if (project.hasProperty('quickPlay')) {
+                args '--quickPlaySingleplayer', project.property('quickPlay').toString()
+            }
+        }
 
         register('server') {
             args '--nogui'
