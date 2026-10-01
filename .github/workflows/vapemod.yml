@@ -57,6 +57,10 @@ jobs:
           sudo apt-get install -y -qq xvfb xdotool imagemagick libgl1-mesa-dri mesa-vulkan-drivers > /dev/null
           bash .ci/smoke-client.sh
 
+      - name: Built jar in a clean Forge server (empty mods folder)
+        if: success()
+        run: bash .ci/smoke-jar.sh
+
       - name: Print jar (base64) for retrieval
         if: success()
         run: |
