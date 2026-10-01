@@ -1,0 +1,14 @@
+{
+  "vape_inhale": {
+    "sounds": [ { "name": "vapemod:vape_inhale", "attenuation_distance": 8 } ],
+    "subtitle": "subtitles.vapemod.vape_inhale"
+  },
+  "vape_exhale": {
+    "sounds": [ { "name": "vapemod:vape_exhale", "attenuation_distance": 12 } ],
+    "subtitle": "subtitles.vapemod.vape_exhale"
+  },
+  "cough": {
+    "sounds": [ { "name": "vapemod:cough", "attenuation_distance": 16 } ],
+    "subtitle": "subtitles.vapemod.cough"
+  }
+}

@@ -1,6 +1,0 @@
-^net/minecraft/client/gui/[A-Za-z]*\.class$
-^net/minecraft/client/particle/[A-Za-z]*\.class$
-^net/minecraft/client/resources/sounds/[A-Za-z]*\.class$
-^net/minecraft/world/item/ItemUse
-^net/minecraft/world/item/component/(Consumable|UseEffects|UseCooldown|TooltipDisplay)
-^net/minecraftforge/event/entity/living/Living(Damage|Hurt|Death|Equipment|Incoming)

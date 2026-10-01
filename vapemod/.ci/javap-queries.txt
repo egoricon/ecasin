@@ -1,61 +1,12 @@
-net.minecraft.world.item.Item use\(|releaseUsing|getUseDuration|getUseAnimation|finishUsingItem|onUseTick|appendHoverText|isBarVisible|getBarWidth|getBarColor|overrideOtherStackedOnMe|overrideStackedOnOther|inventoryTick|useOnRelease|public net.minecraft.world.item.Item\(
-net.minecraft.world.item.Item$Properties stacksTo|setId|component|durability|craftRemainder|useCooldown|rarity
-net.minecraft.world.item.ItemUseAnimation static
-net.minecraft.world.item.ItemStack  get\(|set\(|remove\(|has\(|getItem\(|shrink|copy\(|  boolean is\(|getUseDuration|isEmpty|getCount|ItemStack\(
-net.minecraft.world.InteractionResult static
-net.minecraft.world.entity.LivingEntity UsingItem|getUseItem|UseItemRemaining|addEffect|hasEffect|removeEffect|getEffect\(|getItemInHand|setItemInHand|getUsedItemHand|isAlive|getMaxHealth|getMainHandItem|getOffhandItem
-net.minecraft.world.entity.player.Player displayClientMessage|OverlayMessage|getCooldowns|getAbilities|hasInfiniteMaterials|getInventory|isCreative|isSpectator| drop\(|addItem|Message
-net.minecraft.world.entity.Entity getEyePosition|getLookAngle|getViewVector|isUnderWater|isEyeInFluid| level\(\)|getEyeY|getX\(\)|getY\(\)|getZ\(\)|getId\(\)|getXRot|getYRot|getAirSupply|getMaxAirSupply|getVehicle|isRemoved|tickCount|random|getPersistentData|position\(\)
-net.minecraft.core.component.DataComponentType$Builder .
-net.minecraft.network.codec.ByteBufCodecs VAR_INT|FLOAT|idMapper| BOOL|STRING_UTF8
-net.minecraft.network.codec.StreamCodec ofMember| map\(|unit
-net.minecraft.world.effect.MobEffect MobEffect\(|addAttributeModifier|applyEffectTick|shouldApplyEffectTickThisTick|onEffectStarted|onEffectAdded|getColor
-net.minecraft.world.effect.MobEffectInstance MobEffectInstance\(|getDuration|endsWithin
-net.minecraft.world.effect.MobEffectCategory static
-net.minecraft.world.effect.MobEffects REGENERATION|SPEED|ABSORPTION|NAUSEA|SLOWNESS|MOVEMENT|CONFUSION|WEAKNESS|MINING|DIG_|HUNGER
-net.minecraft.world.entity.ai.attributes.Attributes MOVEMENT_SPEED|BLOCK_BREAK_SPEED|ATTACK_SPEED|ATTACK_DAMAGE|MINING_EFFICIENCY
-net.minecraft.world.entity.ai.attributes.AttributeModifier$Operation static
-net.minecraft.sounds.SoundEvent create|SoundEvent\(
-net.minecraft.sounds.SoundSource static
-net.minecraft.sounds.SoundEvents BOTTLE_EMPTY|BOTTLE_FILL
-net.minecraft.core.particles.ParticleTypes CLOUD|WHITE_SMOKE|POOF| BUBBLE |SMOKE|CAMPFIRE|SNEEZE
-net.minecraft.core.particles.SimpleParticleType .
-net.minecraft.world.level.Level playSound\(|playLocalSound|addParticle|isClientSide|getEntity\(|players\(|random|getGameTime|addAlwaysVisibleParticle
-net.minecraft.server.level.ServerLevel sendParticles
-net.minecraft.server.level.ServerPlayer connection|getCooldowns| level\(\)|isCreative
-net.minecraft.client.gui.GuiGraphicsExtractor blitSprite|blit\(|guiWidth|guiHeight|pose\(|text\(|fill\(
-net.minecraft.client.gui.Hud extract|getFont|isHidden|Height|Vehicle|Heart|tickCount|getCameraPlayer|random
-net.minecraft.client.gui.Gui .
-net.minecraft.client.renderer.RenderPipelines GUI_TEXTURED
-net.minecraft.client.Minecraft getInstance| player| level| gameMode|getSoundManager| gui| options|particleEngine|isPaused|getCameraEntity
-net.minecraft.client.multiplayer.ClientLevel addParticle|players\(|getEntity\(|entitiesForRendering
-net.minecraft.client.multiplayer.MultiPlayerGameMode canHurtPlayer|hasExperience|isSpectator
-net.minecraft.network.chat.Component translatable\(|literal\(|empty\(
-net.minecraft.world.inventory.ClickAction static
-net.minecraft.world.entity.SlotAccess get\(|set\(
-net.minecraft.tags.FluidTags WATER
-net.minecraft.util.Mth clamp\(|ceil\(|floor\(|lerp\(| sin\(| cos\(|DEG_TO_RAD
-net.minecraft.util.ARGB color\(|white\(|colorFromFloat
-net.minecraft.util.RandomSource nextFloat|nextDouble|nextGaussian|nextInt\(int\)
-net.minecraft.world.phys.Vec3 Vec3\(| add\(| scale\(|normalize|yRot|xRot|static
-net.minecraft.resources.Identifier fromNamespaceAndPath|withDefaultNamespace| parse\(
-net.minecraft.world.item.Items GLASS_BOTTLE |SWEET_BERRIES|SUGAR |IRON_INGOT|REDSTONE |GLASS | APPLE | POTION |FERN|SNOWBALL|GLOW_BERRIES
-net.minecraft.world.item.CreativeModeTab builder|icon|displayItems|title|withTabsBefore
-net.minecraft.world.item.CreativeModeTab$Builder .
-net.minecraft.world.item.ItemCooldowns addCooldown|isOnCooldown
-net.minecraft.world.entity.player.Abilities instabuild|invulnerable
-net.minecraft.world.entity.player.Inventory add\(|placeItemBackInInventory
-net.minecraft.nbt.CompoundTag getFloatOr|getIntOr|putFloat|putInt|getCompoundOrEmpty|getCompound\(| put\(|contains\(|copy\(
-net.minecraft.client.resources.sounds.AbstractTickableSoundInstance .
-net.minecraft.client.resources.sounds.AbstractSoundInstance .
-net.minecraft.client.resources.sounds.SoundInstance$Attenuation static
-net.minecraft.client.sounds.SoundManager play\(|isActive|stop\(
-net.minecraft.client.particle.Particle .
-net.minecraft.client.particle.SingleQuadParticle .
-net.minecraft.client.particle.ParticleProvider .
-net.minecraft.client.particle.SpriteSet .
-net.minecraft.client.particle.ParticleEngine add\(|createParticle
-net.minecraft.world.item.alchemy.PotionContents is\(|PotionContents\(
-net.minecraft.world.item.alchemy.Potions WATER
-net.minecraft.world.item.TooltipFlag isAdvanced
-net.minecraft.world.entity.player.Player$BedSleepingProblem __none__
+net.minecraft.client.particle.SingleQuadParticle$Layer static
+net.minecraft.client.particle.ParticleResources$SpriteParticleRegistration .
+net.minecraft.world.inventory.Slot allowModification|mayPickup|mayPlace
+net.minecraft.world.entity.Entity playSound|getRandom
+net.minecraft.client.Options getCameraType|hideGui
+net.minecraft.client.CameraType static
+net.minecraft.world.item.crafting.Ingredient display|test\(|items\(|isSimple|serializer|Ingredient\(
+net.minecraft.core.component.DataComponentHolder get\(|has\(|getOrDefault
+net.minecraft.world.item.ItemStack is\(
+net.minecraft.world.item.Item getDescriptionId|getDefaultInstance
+net.minecraft.world.effect.MobEffect getDescriptionId
+net.minecraft.world.item.CreativeModeTab$Output accept

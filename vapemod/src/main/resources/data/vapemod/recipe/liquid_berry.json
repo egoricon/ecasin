@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "vapemod_liquid",
+  "ingredients": [
+    "minecraft:sweet_berries",
+    "minecraft:sugar",
+    { "type": "vapemod:water_bottle" }
+  ],
+  "result": {
+    "id": "vapemod:liquid_berry"
+  }
+}

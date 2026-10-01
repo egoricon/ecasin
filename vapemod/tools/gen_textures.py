@@ -203,3 +203,24 @@ eff_pal = {
 }
 save(from_rows(COUGH, eff_pal), "mob_effect/cough.png")
 save(from_rows(CRAVING, eff_pal), "mob_effect/craving.png")
+
+# ------------------------------------------------ vapour particle (16x16 x4)
+# Soft white puffs; alpha fades out towards the edge. Tinted in code with the liquid colour.
+import math
+import random
+
+rnd = random.Random(262)
+for frame in range(4):
+    img = Image.new("RGBA", (16, 16), T)
+    blobs = [(7.5 + rnd.uniform(-1.5, 1.5), 7.5 + rnd.uniform(-1.5, 1.5), rnd.uniform(3.5, 5.0)) for _ in range(3)]
+    for y in range(16):
+        for x in range(16):
+            a = 0.0
+            for bx, by, br in blobs:
+                d = math.hypot(x - bx, y - by) / br
+                a = max(a, 1.0 - d)
+            a = max(0.0, min(1.0, a * 1.6)) ** 1.3
+            if a > 0.02:
+                shade = 235 + int(20 * a)
+                img.putpixel((x, y), (shade, shade, shade, int(255 * a)))
+    save(img, f"particle/vapor_{frame}.png")
