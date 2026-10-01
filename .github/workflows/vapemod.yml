@@ -57,6 +57,15 @@ jobs:
           sudo apt-get install -y -qq xvfb xdotool imagemagick libgl1-mesa-dri mesa-vulkan-drivers > /dev/null
           bash .ci/smoke-client.sh
 
+      - name: Print jar (base64) for retrieval
+        if: success()
+        run: |
+          for f in build/libs/*.jar; do
+            echo "==JAR $(basename $f) $(sha256sum $f | cut -d' ' -f1)=="
+            base64 -w 0 "$f"; echo
+            echo "==END=="
+          done
+
       - uses: actions/upload-artifact@v4
         if: success()
         with:

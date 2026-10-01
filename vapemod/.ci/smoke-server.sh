@@ -22,7 +22,10 @@ done
 if [ $ok = 1 ]; then
   sleep 3
   # exercise registries and the liquid data component through console commands
+  echo 'forceload add 0 0 16 16' >&3
+  sleep 3
   echo 'summon minecraft:armor_stand 0 -60 0 {Tags:["vt"],NoGravity:1b}' >&3
+  sleep 1
   echo 'effect give @e[tag=vt,limit=1] vapemod:cough 5' >&3
   echo 'effect give @e[tag=vt,limit=1] vapemod:craving 5' >&3
   echo 'setblock 1 -60 1 minecraft:chest' >&3
@@ -35,7 +38,7 @@ fi
 for i in $(seq 1 120); do grep -q '^exit=' /tmp/server.log && break; sleep 1; done
 exec 3>&-
 echo "=== server log (filtered) ==="
-grep -E 'vapemod|VapeMod|Vape Mod|ERROR|Exception|Caused by|Done \(|exit=|Applied effect|has the following|Replaced a slot|Changed the block|Summoned' /tmp/server.log | grep -v kqueue | head -300
+grep -E 'vapemod|VapeMod|Vape Mod|ERROR|Exception|Caused by|Done \(|exit=|Applied effect|has the following|Replaced a slot|Changed the block|Summoned|forceload|not loaded|No entity|Unknown|Expected|Invalid|Malformed' /tmp/server.log | grep -v kqueue | head -300
 echo "=== server log tail ==="
 tail -60 /tmp/server.log
 if [ $ok != 1 ]; then echo "Server did not start"; exit 1; fi
