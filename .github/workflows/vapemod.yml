@@ -39,7 +39,7 @@ jobs:
         run: ./gradlew build --stacktrace --warning-mode=summary
 
       - name: Research (javap signatures)
-        if: always() && hashFiles('vapemod/.ci/javap-classes.txt') != ''
+        if: always() && hashFiles('vapemod/.ci/javap-queries.txt') != ''
         run: bash .ci/research.sh
 
       - name: Server smoke test

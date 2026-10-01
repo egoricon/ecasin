@@ -1,0 +1,2 @@
+net.minecraft.client.gui.Hud extractFood
+net.minecraft.client.gui.Hud extractAirBubbles
