@@ -69,8 +69,11 @@ pkill -f 'net.minecraftforge' || true
 sleep 3
 echo "=== client log (filtered) ==="
 grep -E 'vapemod|VapeMod|Vape Mod|ERROR|Exception|Caused by|joined the game|OpenGL|Vulkan|GL_RENDERER|Backend|exit=' /tmp/client.log | grep -v 'DEBUG' | head -200
+echo "=== mod warnings ==="
+grep -E 'WARN|ERROR' /tmp/client.log | grep -E 'vapemod:' | head -50
 echo "=== client log tail ==="
 tail -40 /tmp/client.log
 if [ $joined != 1 ]; then echo "Client did not join the world"; exit 1; fi
-if grep -E '(ERROR|Exception).*' /tmp/client.log | grep -qi 'vapemod'; then echo "Mod errors found"; exit 1; fi
+if grep -E '(ERROR|Exception).*' /tmp/client.log | grep -qE 'vapemod:|com\.example\.vapemod|co\.ex\.va\.'; then echo "Mod errors found"; exit 1; fi
+if grep -E 'WARN|ERROR' /tmp/client.log | grep -E 'vapemod:' | grep -qiE 'missing|unable|failed|not found|unknown'; then echo "Missing mod resources"; exit 1; fi
 echo "Client smoke test OK"

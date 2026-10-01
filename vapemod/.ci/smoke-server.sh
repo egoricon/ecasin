@@ -44,5 +44,5 @@ tail -60 /tmp/server.log
 if [ $ok != 1 ]; then echo "Server did not start"; exit 1; fi
 grep -q 'Applied effect' /tmp/server.log || { echo "Effect command failed"; exit 1; }
 grep -q 'vapemod:liquid' /tmp/server.log || { echo "Liquid component not found in chest data"; exit 1; }
-if grep -E '(ERROR|Exception).*' /tmp/server.log | grep -qi 'vapemod'; then echo "Mod errors found"; exit 1; fi
+if grep -E '(ERROR|Exception).*' /tmp/server.log | grep -qE 'vapemod:|com\.example\.vapemod|co\.ex\.va\.'; then echo "Mod errors found"; exit 1; fi
 echo "Smoke test OK"

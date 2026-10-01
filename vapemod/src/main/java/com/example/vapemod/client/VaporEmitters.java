@@ -78,8 +78,10 @@ public final class VaporEmitters {
         int count = Math.max(1, Math.round((1.0F + 4.0F * emitter.strength) * (1.0F - 0.7F * progress)));
         Vec3 look = entity.getLookAngle();
         boolean firstPerson = entity == mc.getCameraEntity() && mc.options.getCameraType() == CameraType.FIRST_PERSON;
-        double forward = firstPerson ? 0.55 : 0.3;
-        Vec3 mouth = entity.getEyePosition().add(look.scale(forward)).add(0.0, -0.12, 0.0);
+        // in first person start a bit further and lower so the cloud forms under the crosshair
+        double forward = firstPerson ? 0.7 : 0.3;
+        double down = firstPerson ? -0.22 : -0.12;
+        Vec3 mouth = entity.getEyePosition().add(look.scale(forward)).add(0.0, down, 0.0);
         double speed = (0.05 + 0.11 * emitter.strength) * (1.0F - 0.5F * progress);
 
         for (int i = 0; i < count; i++) {
